@@ -36,8 +36,8 @@ export default function SendVerifiedPage() {
       <h1 className="text-2xl font-bold mb-4">Email Verification Required</h1>
       <p className="text-muted-foreground mb-6 max-w-md">
         Your email has not been verified yet. Please check your inbox and click
-        the activation link. If you haven;t received the email, you can resend
-        it from here.
+        the activation link. If you havent received the email, you can resend it
+        from here.
       </p>
       <Button
         onClick={handleResend}
