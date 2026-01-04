@@ -1,0 +1,99 @@
+name: Next.js CI
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "api/**"
+      - "app/**"
+      - "components/**"
+      - "context/**"
+      - "hooks/**"
+      - "lib/**"
+      - "services/**"
+      - "utils/**"
+      - "public/**"
+      - "package.json"
+
+  pull_request:
+    branches: ["main", "master"]
+    # يُفضل إضافة الـ paths هنا أيضاً لتوحيد السلوك
+    paths:
+      - "api/**"
+      - "app/**"
+      - "components/**"
+      - "context/**"
+      - "hooks/**"
+      - "lib/**"
+      - "services/**"
+      - "utils/**"
+      - "public/**"
+      - "package.json"
+
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x] # نصيحة: 20.x كافية حالياً وهي المستقرة (LTS) لتسريع الوقت
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Audit fix
+        run: npm audit fix --force # أضفنا --force لضمان الإصلاح التلقائي داخل البيئة التخيلية
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm test --if-present
+
+      - name: Next.js Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          # إذا كان المشروع يحتاج اتصال بـ Database وقت الـ Build، ستحتاج لإضافة متغيرات البيئة هنا
+
+  deploy:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # 1. Go to your site folder (CHANGE THIS to your actual folder name)
+            cd /home/qregy/htdocs/pizzagyro
+
+            # 2. Pull the latest code
+            git pull origin main
+
+            # 3. Load Node.js environment & Install
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            npm install
+            npm audit fix 
+
+            npm ci
+            # 4. Build and Restart
+            npm run build
+            pm2 restart pizza-next || npm run start pizza-next 
+            pm2 save
