@@ -15,6 +15,15 @@ import { toast } from "sonner";
 import { Label } from "../ui/Label";
 import { Textarea } from "../ui/textarea";
 
+const OPTION_GROUP_CONFIG = {
+  size: { type: "single", required: true },
+  dough: { type: "single", required: false },
+  sauce: { type: "single", required: false },
+  filling: { type: "single", required: false },
+  spice_level: { type: "single", required: false },
+  extra: { type: "multiple", required: false, max: 5 },
+};
+
 export default function AddToOrderButton({
   item,
   lang,
@@ -24,89 +33,39 @@ export default function AddToOrderButton({
 }) {
   const { addToOrder, setRestaurantId, setTableId } = useOrder();
   const [open, setOpen] = useState(false);
-  const [selectedOptions, setSelectedOptions] = useState({
-    dough: null,
-    sauce: null,
-    extra: [],
-    filling: null,
-    size: null,
-  });
+  const [selectedOptions, setSelectedOptions] = useState({});
   const [comment, setComment] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const [activeSize, setActiveSize] = useState("M");
 
   // عند فتح الدايلوج، نضبط الحجم الافتراضي
   useEffect(() => {
-    if (item.options_grouped?.size && item.options_grouped.size.length > 0) {
-      setActiveSize(item.options_grouped.size[0]?.name || "M");
+    if (item && item.options_grouped?.size) {
       setSelectedOptions((prev) => ({
         ...prev,
-        size: item.options_grouped.size[0]?.name || "M",
+        size: item.options_grouped.size[0].id,
       }));
     }
-  }, [item, open]);
+  }, [item]);
 
   // ✅ دالة لحساب السعر النهائي
   const calculateItemTotal = () => {
-    let total = parseFloat(item.price) || 0;
+    let total = Number(item.price);
 
-    // إضافة سعر الحجم
-    if (selectedOptions.size && item.options_grouped?.size) {
-      const sizeOption = item.options_grouped.size.find(
-        (s) => s.name === selectedOptions.size
-      );
-      if (sizeOption) {
-        total += parseFloat(sizeOption.price);
+    Object.entries(selectedOptions).forEach(([groupKey, value]) => {
+      const options = item.options_grouped?.[groupKey] || [];
+
+      if (Array.isArray(value)) {
+        value.forEach((id) => {
+          const opt = options.find((o) => o.id === id);
+          if (opt) total += Number(opt.price || 0);
+        });
+      } else {
+        const opt = options.find((o) => o.id === value);
+        if (opt) total += Number(opt.price || 0);
       }
-    }
+    });
 
-    // إضافة سعر Dough
-    if (selectedOptions.dough && item.options_grouped?.dough) {
-      const doughOption = item.options_grouped.dough.find(
-        (d) => d.id === selectedOptions.dough
-      );
-      if (doughOption) {
-        total += parseFloat(doughOption.price);
-      }
-    }
-
-    // إضافة سعر Sauce
-    if (selectedOptions.sauce && item.options_grouped?.sauce) {
-      const sauceOption = item.options_grouped.sauce.find(
-        (s) => s.id === selectedOptions.sauce
-      );
-      if (sauceOption) {
-        total += parseFloat(sauceOption.price);
-      }
-    }
-
-    // إضافة سعر الحشوات
-    if (selectedOptions.filling && item.options_grouped?.filling) {
-      const fillingOption = item.options_grouped.filling.find(
-        (f) => f.id === selectedOptions.filling
-      );
-      if (fillingOption) {
-        total += parseFloat(fillingOption.price);
-      }
-    }
-
-    // إضافة سعر الإضافات
-    if (
-      selectedOptions.extra &&
-      selectedOptions.extra.length > 0 &&
-      item.options_grouped?.extra
-    ) {
-      selectedOptions.extra.forEach((extraId) => {
-        const extraOption = item.options_grouped.extra.find(
-          (e) => e.id === extraId
-        );
-        if (extraOption) {
-          total += parseFloat(extraOption.price);
-        }
-      });
-    }
-
-    return total * quantity;
+    return Number((total * quantity).toFixed(2));
   };
 
   // ✅ تحديث تلقائي للسعر الإجمالي
@@ -114,20 +73,26 @@ export default function AddToOrderButton({
     return calculateItemTotal();
   }, [selectedOptions, item.price, quantity]);
 
-  const handleOptionSelect = (type, id) => {
+  const handleOptionSelect = (groupKey, optionId) => {
+    const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
+
     setSelectedOptions((prev) => {
-      if (type === "extra") {
-        const isSelected = prev.extra.includes(id);
+      if (config.type === "multiple") {
+        const current = prev[groupKey] || [];
+        const exists = current.includes(optionId);
+
         return {
           ...prev,
-          extra: isSelected
-            ? prev.extra.filter((item) => item !== id)
-            : [...prev.extra, id],
+          [groupKey]: exists
+            ? current.filter((id) => id !== optionId)
+            : [...current, optionId],
         };
       }
+
+      // single
       return {
         ...prev,
-        [type]: prev[type] === id ? null : id,
+        [groupKey]: prev[groupKey] === optionId ? null : optionId,
       };
     });
   };
@@ -137,89 +102,29 @@ export default function AddToOrderButton({
     setTableId(table_id);
 
     // تحضير بيانات الخيارات للإرسال
+
     const optionsArray = [];
 
-    // إضافة الحجم
-    if (selectedOptions.size) {
-      const sizeOption = item.options_grouped?.size?.find(
-        (s) => s.name === selectedOptions.size
-      );
-      if (sizeOption) {
-        optionsArray.push({
-          id: sizeOption.id,
-          name: lang === "ar" ? sizeOption.name : sizeOption.name_en,
-          name_en: sizeOption.name_en,
-          price: parseFloat(sizeOption.price),
-          option_type: "size",
-        });
-      }
-    }
+    Object.entries(selectedOptions).forEach(([groupKey, value]) => {
+      const options = item.options_grouped?.[groupKey] || [];
 
-    // إضافة العجين
-    if (selectedOptions.dough && item.options_grouped?.dough) {
-      const doughOption = item.options_grouped.dough.find(
-        (d) => d.id === selectedOptions.dough
-      );
-      if (doughOption) {
-        optionsArray.push({
-          id: doughOption.id,
-          name: lang === "ar" ? doughOption.name : doughOption.name_en,
-          name_en: doughOption.name_en,
-          price: parseFloat(doughOption.price),
-          option_type: "dough",
+      if (Array.isArray(value)) {
+        value.forEach((id) => {
+          const opt = options.find((o) => o.id === id);
+          if (opt) optionsArray.push(opt.id);
         });
-      }
-    }
-
-    // إضافة الصلصة
-    if (selectedOptions.sauce && item.options_grouped?.sauce) {
-      const sauceOption = item.options_grouped.sauce.find(
-        (s) => s.id === selectedOptions.sauce
-      );
-      if (sauceOption) {
-        optionsArray.push({
-          id: sauceOption.id,
-          name: lang === "ar" ? sauceOption.name : sauceOption.name_en,
-          name_en: sauceOption.name_en,
-          price: parseFloat(sauceOption.price),
-          option_type: "sauce",
-        });
-      }
-    }
-
-    // إضافة الحشوة
-    if (selectedOptions.filling && item.options_grouped?.filling) {
-      const fillingOption = item.options_grouped.filling.find(
-        (f) => f.id === selectedOptions.filling
-      );
-      if (fillingOption) {
-        optionsArray.push({
-          id: fillingOption.id,
-          name: lang === "ar" ? fillingOption.name : fillingOption.name_en,
-          name_en: fillingOption.name_en,
-          price: parseFloat(fillingOption.price),
-          option_type: "filling",
-        });
-      }
-    }
-
-    // إضافة الإضافات
-    if (selectedOptions.extra && item.options_grouped?.extra) {
-      selectedOptions.extra.forEach((extraId) => {
-        const extraOption = item.options_grouped.extra.find(
-          (e) => e.id === extraId
-        );
-        if (extraOption) {
+      } else {
+        const opt = options.find((o) => o.id === value);
+        if (opt)
           optionsArray.push({
-            id: extraOption.id,
-            name: lang === "ar" ? extraOption.name : extraOption.name_en,
-            name_en: extraOption.name_en,
-            price: parseFloat(extraOption.price),
-            option_type: "extra",
+            id: opt.id,
+            name_en: opt.name_en,
+            name: opt.name,
+            price: opt.price,
+            option_type: opt.option_type,
           });
-        }
-      });
-    }
+      }
+    });
 
     addToOrder(
       {
@@ -241,13 +146,7 @@ export default function AddToOrderButton({
     );
 
     setOpen(false);
-    setSelectedOptions({
-      dough: null,
-      sauce: null,
-      extra: [],
-      filling: null,
-      size: null,
-    });
+    setSelectedOptions({});
     setQuantity(1);
     setComment("");
     setSelectedMenu?.(null);
@@ -283,166 +182,45 @@ export default function AddToOrderButton({
           className="w-full h-48 object-cover rounded-lg mb-4"
         />
 
-        {/* اختيار الحجم */}
-        {item.options_grouped?.size && item.options_grouped.size.length > 0 && (
-          <div className="mb-6">
-            <p className="font-bold text-slate-600 mb-3 text-sm">
-              {lang === "ar" ? "اختر الحجم:" : "Select The Size:"}
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {item.options_grouped.size.map((sizeOption) => (
-                <span
-                  key={sizeOption.id}
-                  onClick={() => {
-                    setActiveSize(sizeOption.name);
-                    setSelectedOptions((prev) => ({
-                      ...prev,
-                      size: sizeOption.name,
-                    }));
-                  }}
-                  className={`py-2 rounded-lg border-2 transition-all flex flex-col items-center ${
-                    activeSize === sizeOption.name
+        {Object.entries(item.options_grouped).map(([groupKey, options]) => {
+          const config = OPTION_GROUP_CONFIG[groupKey] || {};
+          const isMultiple = config.type === "multiple";
+
+          return (
+            <div key={groupKey} className="mb-8">
+              <p className="font-bold text-slate-600 mb-3 capitalize">
+                {groupKey.replace("_", " ")}
+                {config.required && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {options.map((opt) => {
+                  const isSelected = isMultiple
+                    ? (selectedOptions[groupKey] || []).includes(opt.id)
+                    : selectedOptions[groupKey] === opt.id;
+
+                  return (
+                    <span
+                      key={opt.id}
+                      onClick={() => handleOptionSelect(groupKey, opt.id)}
+                      className={`py-3 rounded-xl border-2 transition-all text-center
+                  ${
+                    isSelected
                       ? "border-orange-500 bg-orange-50 text-orange-600"
                       : "border-slate-100 text-slate-700"
                   }`}
-                >
-                  <span className="font-bold text-sm">{sizeOption.name}</span>
-                  <span className="text-xs">
-                    +{parseFloat(sizeOption.price)} {lang === "ar" ? "$" : "$"}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* اختيار Dough */}
-        {item.options_grouped?.dough &&
-          item.options_grouped.dough.length > 0 && (
-            <div className="mb-6">
-              <p className="font-bold text-slate-600 mb-3 text-sm">
-                {lang === "ar" ? "اختر نوع العجين:" : "Select The Dough:"}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {item.options_grouped.dough.map((doughOption) => (
-                  <span
-                    key={doughOption.id}
-                    onClick={() => handleOptionSelect("dough", doughOption.id)}
-                    className={`py-2 rounded-lg border-2 transition-all flex flex-col items-center ${
-                      selectedOptions.dough === doughOption.id
-                        ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-slate-100 text-slate-700"
-                    }`}
-                  >
-                    <span className="font-bold text-sm truncate w-full text-center px-1">
-                      {lang === "ar" ? doughOption.name : doughOption.name_en}
+                    >
+                      <div className="font-bold">{opt.name}</div>
+                      <div className="text-sm">+${opt.price}</div>
                     </span>
-                    <span className="text-xs">
-                      +{parseFloat(doughOption.price)}{" "}
-                      {lang === "ar" ? "$" : "$"}
-                    </span>
-                  </span>
-                ))}
+                  );
+                })}
               </div>
             </div>
-          )}
-
-        {/* اختيار Sauce */}
-        {item.options_grouped?.sauce &&
-          item.options_grouped.sauce.length > 0 && (
-            <div className="mb-6">
-              <p className="font-bold text-slate-600 mb-3 text-sm">
-                {lang === "ar" ? "اختر الصلصة:" : "Select The Sauce:"}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {item.options_grouped.sauce.map((sauceOption) => (
-                  <span
-                    key={sauceOption.id}
-                    onClick={() => handleOptionSelect("sauce", sauceOption.id)}
-                    className={`py-2 rounded-lg border-2 transition-all flex flex-col items-center ${
-                      selectedOptions.sauce === sauceOption.id
-                        ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-slate-100 text-slate-700"
-                    }`}
-                  >
-                    <span className="font-bold text-sm truncate w-full text-center px-1">
-                      {lang === "ar" ? sauceOption.name : sauceOption.name_en}
-                    </span>
-                    <span className="text-xs">
-                      +{parseFloat(sauceOption.price)}{" "}
-                      {lang === "ar" ? "$" : "$"}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {/* اختيار Filling */}
-        {item.options_grouped?.filling &&
-          item.options_grouped.filling.length > 0 && (
-            <div className="mb-6">
-              <p className="font-bold text-slate-600 mb-3 text-sm">
-                {lang === "ar" ? "اختر الحشوة:" : "Select The Filling:"}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {item.options_grouped.filling.map((fillingOption) => (
-                  <span
-                    key={fillingOption.id}
-                    onClick={() =>
-                      handleOptionSelect("filling", fillingOption.id)
-                    }
-                    className={`py-2 rounded-lg border-2 transition-all flex flex-col items-center ${
-                      selectedOptions.filling === fillingOption.id
-                        ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-slate-100 text-slate-700"
-                    }`}
-                  >
-                    <span className="font-bold text-sm truncate w-full text-center px-1">
-                      {lang === "ar"
-                        ? fillingOption.name
-                        : fillingOption.name_en}
-                    </span>
-                    <span className="text-xs">
-                      +{parseFloat(fillingOption.price)}{" "}
-                      {lang === "ar" ? "$" : "$"}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {/* اختيار الإضافات */}
-        {item.options_grouped?.extra &&
-          item.options_grouped.extra.length > 0 && (
-            <div className="mb-6">
-              <p className="font-bold text-slate-600 mb-3 text-sm">
-                {lang === "ar" ? "اختر الإضافات:" : "Select Extras:"}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {item.options_grouped.extra.map((extraOption) => (
-                  <span
-                    key={extraOption.id}
-                    onClick={() => handleOptionSelect("extra", extraOption.id)}
-                    className={`py-2 rounded-lg border-2 transition-all flex flex-col items-center ${
-                      selectedOptions.extra.includes(extraOption.id)
-                        ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-slate-100 text-slate-700"
-                    }`}
-                  >
-                    <span className="font-bold text-sm truncate w-full text-center px-1">
-                      {lang === "ar" ? extraOption.name : extraOption.name_en}
-                    </span>
-                    <span className="text-xs">
-                      +{parseFloat(extraOption.price)}{" "}
-                      {lang === "ar" ? "$" : "$"}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          );
+        })}
 
         {/* ✅ الكمية */}
         <div className="mb-6">
@@ -497,15 +275,22 @@ export default function AddToOrderButton({
               {lang === "ar" ? "السعر الأساسي:" : "Base Price:"}{" "}
               {parseFloat(item.price).toFixed(2)} {lang === "ar" ? "جنيه" : "$"}
             </p>
-            {selectedOptions.size && (
-              <p>
-                {lang === "ar" ? "الحجم" : "Size"} ({selectedOptions.size}): +
-                {item.options_grouped?.size?.find(
-                  (s) => s.name === selectedOptions.size
-                )?.price || "0.00"}
-                {lang === "ar" ? "جنيه" : "$"}
-              </p>
-            )}
+            {selectedOptions.size &&
+              (() => {
+                const sizeOption = item.options_grouped?.size?.find(
+                  (s) => s.id === selectedOptions.size
+                );
+
+                if (!sizeOption) return null;
+
+                return (
+                  <p>
+                    {lang === "ar" ? "الحجم" : "Size"} ({sizeOption.name}): +
+                    {parseFloat(sizeOption.price).toFixed(2)}{" "}
+                    {lang === "ar" ? "جنيه" : "$"}
+                  </p>
+                );
+              })()}
           </div>
         </div>
 

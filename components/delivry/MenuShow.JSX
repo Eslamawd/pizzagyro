@@ -25,22 +25,18 @@ import LocationPicker from "./LocationPicker";
 import { getMenus } from "@/lib/menuApi";
 import { addNewOrderDelivery } from "@/lib/orderApi";
 
-const OPTION_GROUP_CONFIG = {
-  size: { type: "single", required: true },
-  dough: { type: "single", required: false },
-  sauce: { type: "single", required: false },
-  filling: { type: "single", required: false },
-  spice_level: { type: "single", required: false },
-  extra: { type: "multiple", required: false, max: 5 },
-};
-
 const MenuShowDelivery = () => {
   // --- States ---
   const [cart, setCart] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedOptions, setSelectedOptions] = useState({});
-
+  const [activeSize, setActiveSize] = useState("M");
+  const [selectedOptions, setSelectedOptions] = useState({
+    dough: null,
+    sauce: null,
+    extra: [],
+    filling: null,
+  });
   const [showCart, setShowCart] = useState(false);
   const [location, setLocation] = useState({
     address: "",
@@ -114,87 +110,149 @@ const MenuShowDelivery = () => {
     getMenusApi();
   }, []);
 
-  const calculateItemTotal = (item, selectedOptions = {}) => {
-    let total = Number(item.price);
+  // --- دالة لحساب السعر النهائي ---
+  const calculateItemTotal = (item, size = null, options = {}) => {
+    let total = parseFloat(item.price) || 0;
 
-    Object.entries(item.options_grouped || {}).forEach(
-      ([groupKey, options]) => {
-        const selected = selectedOptions[groupKey];
-        if (!selected) return;
-
-        if (Array.isArray(selected)) {
-          selected.forEach((id) => {
-            const opt = options.find((o) => o.id === id);
-            if (opt) total += Number(opt.price || 0);
-          });
-        } else {
-          const opt = options.find((o) => o.id === selected);
-          if (opt) total += Number(opt.price || 0);
-        }
+    // إضافة سعر الحجم
+    if (size && item.options_grouped?.size) {
+      const sizeOption = item.options_grouped.size.find(
+        (s) => s.name === size || s.name_en === size
+      );
+      if (sizeOption) {
+        total += parseFloat(sizeOption.price);
       }
-    );
+    }
 
-    return Number(total.toFixed(2));
+    // إضافة سعر Dough
+    if (options.dough && item.options_grouped?.dough) {
+      const doughOption = item.options_grouped.dough.find(
+        (d) => d.id === options.dough
+      );
+      if (doughOption) {
+        total += parseFloat(doughOption.price);
+      }
+    }
+
+    // إضافة سعر Sauce
+    if (options.sauce && item.options_grouped?.sauce) {
+      const sauceOption = item.options_grouped.sauce.find(
+        (s) => s.id === options.sauce
+      );
+      if (sauceOption) {
+        total += parseFloat(sauceOption.price);
+      }
+    }
+
+    // إضافة سعر الحشوات
+    if (options.filling && item.options_grouped?.filling) {
+      const fillingOption = item.options_grouped.filling.find(
+        (f) => f.id === options.filling
+      );
+      if (fillingOption) {
+        total += parseFloat(fillingOption.price);
+      }
+    }
+
+    // إضافة سعر الإضافات
+    if (
+      options.extra &&
+      options.extra.length > 0 &&
+      item.options_grouped?.extra
+    ) {
+      options.extra.forEach((extraId) => {
+        const extraOption = item.options_grouped.extra.find(
+          (e) => e.id === extraId
+        );
+        if (extraOption) {
+          total += parseFloat(extraOption.price);
+        }
+      });
+    }
+
+    return total.toFixed(2);
   };
 
   // --- دالات السلة المحسنة ---// --- دالات السلة المحسنة ---
-  const addToCart = (item, selectedOptions = {}) => {
-    const size = selectedOptions.size;
-    const finalPrice = calculateItemTotal(item, selectedOptions);
+  const addToCart = (item, size = null, options = {}) => {
+    const finalPrice = calculateItemTotal(item, size, options);
     const cartItemId = size ? `${item.id}-${size}` : `${item.id}`;
 
+    // إنشاء اسم العرض مع الخيارات
     let displayName = item.name;
-    if (size) {
-      const sizeName =
-        item.options_grouped.size.find((s) => s.id === size)?.name || size;
-      displayName += ` (${sizeName})`;
-    }
+    if (size) displayName += ` (${size})`;
 
-    // options details بدون تغيير
-    const optionDetails = {};
-    Object.entries(selectedOptions).forEach(([groupKey, value]) => {
-      const groupOptions = item.options_grouped?.[groupKey];
-      if (!groupOptions) return;
-
-      if (Array.isArray(value)) {
-        optionDetails[groupKey] = value
-          .map((id) => {
-            const opt = groupOptions.find((o) => o.id === id);
-            return opt ? { id: opt.id, name: opt.name } : null;
-          })
-          .filter(Boolean);
-      } else if (value) {
-        const opt = groupOptions.find((o) => o.id === value);
-        if (opt) optionDetails[groupKey] = { id: opt.id, name: opt.name };
-      }
-    });
+    // جمع معلومات الخيارات مع الـ IDs
+    const optionDetails = {
+      dough: options.dough
+        ? {
+            id: options.dough,
+            name: item.options_grouped?.dough?.find(
+              (d) => d.id === options.dough
+            )?.name,
+          }
+        : null,
+      sauce: options.sauce
+        ? {
+            id: options.sauce,
+            name: item.options_grouped?.sauce?.find(
+              (s) => s.id === options.sauce
+            )?.name,
+          }
+        : null,
+      filling: options.filling
+        ? {
+            id: options.filling,
+            name: item.options_grouped?.filling?.find(
+              (f) => f.id === options.filling
+            )?.name,
+          }
+        : null,
+      extra:
+        options.extra && item.options_grouped?.extra
+          ? options.extra
+              .map((extraId) => {
+                const extraOption = item.options_grouped.extra.find(
+                  (e) => e.id === extraId
+                );
+                return extraOption
+                  ? { id: extraOption.id, name: extraOption.name }
+                  : null;
+              })
+              .filter(Boolean)
+          : [],
+    };
 
     setCart((prev) => {
       const existing = prev.find((i) => i.id === cartItemId);
-      if (existing)
+      if (existing) {
         return prev.map((i) =>
           i.id === cartItemId ? { ...i, qty: i.qty + 1 } : i
         );
-
+      }
       return [
         ...prev,
         {
+          ...item,
           id: cartItemId,
-          item_id: item.id,
           name: displayName,
-          image: item.image,
-          price: finalPrice,
+          price: parseFloat(finalPrice),
           qty: 1,
+          size: size,
           options: optionDetails,
+          options_grouped: item.options_grouped, // حفظ للرجوع إليه لاحقاً
         },
       ];
     });
-
     setSelectedItem(null);
-    setSelectedOptions({});
-    toast.success(`Added ${displayName} 🍽️`);
+    setSelectedOptions({
+      dough: null,
+      sauce: null,
+      extra: [],
+      filling: null,
+    });
+    toast.success(`Successfully added ${displayName} 🍽️`);
   };
-
   const updateQty = (id, delta) => {
     setCart((prev) =>
       prev
@@ -222,6 +280,7 @@ const MenuShowDelivery = () => {
     if (!phone) {
       toast.error("Please set your delivery Phone first!");
       setShowCart(false);
+      setShowLocModal(true);
       return;
     }
 
@@ -250,14 +309,39 @@ const MenuShowDelivery = () => {
         // جمع جميع option IDs بشكل صحيح
         const optionIds = [];
 
-        if (item.options) {
-          Object.values(item.options).forEach((opt) => {
-            if (Array.isArray(opt)) {
-              opt.forEach((o) => o.id && optionIds.push(o.id));
-            } else if (opt?.id) {
-              optionIds.push(opt.id);
+        // إضافة option IDs للخيارات المختلفة
+        if (item.options?.dough?.id) {
+          optionIds.push(item.options.dough.id);
+        }
+
+        if (item.options?.sauce?.id) {
+          optionIds.push(item.options.sauce.id);
+        }
+
+        if (item.options?.filling?.id) {
+          optionIds.push(item.options.filling.id);
+        }
+
+        // الإضافات تكون مصفوفة من IDs
+        if (item.options?.extra && Array.isArray(item.options.extra)) {
+          item.options.extra.forEach((extra) => {
+            if (extra.id) {
+              optionIds.push(extra.id);
             }
           });
+        }
+
+        // الحجم يكون option من نوع size
+        if (item.size) {
+          // إذا كان item يحتوي على options_grouped، نبحث عن ID الحجم
+          if (item.options_grouped?.size) {
+            const sizeOption = item.options_grouped.size.find(
+              (s) => s.name === item.size
+            );
+            if (sizeOption?.id) {
+              optionIds.push(sizeOption.id);
+            }
+          }
         }
 
         return {
@@ -284,31 +368,22 @@ const MenuShowDelivery = () => {
     }
   };
 
-  const cartTotal = cart.reduce((sum, item) => {
-    const itemTotal = calculateItemTotal(item, item.options);
-    return sum + itemTotal * item.qty;
-  }, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  const handleOptionSelect = (groupKey, optionId) => {
-    const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
-
+  const handleOptionSelect = (type, id) => {
     setSelectedOptions((prev) => {
-      if (config.type === "multiple") {
-        const current = prev[groupKey] || [];
-        const exists = current.includes(optionId);
-
+      if (type === "extra") {
+        const isSelected = prev.extra.includes(id);
         return {
           ...prev,
-          [groupKey]: exists
-            ? current.filter((id) => id !== optionId)
-            : [...current, optionId],
+          extra: isSelected
+            ? prev.extra.filter((item) => item !== id)
+            : [...prev.extra, id],
         };
       }
-
-      // single
       return {
         ...prev,
-        [groupKey]: prev[groupKey] === optionId ? null : optionId,
+        [type]: prev[type] === id ? null : id,
       };
     });
   };
@@ -331,10 +406,7 @@ const MenuShowDelivery = () => {
   // --- عند اختيار عنصر جديد، نضبط الحجم الافتراضي ---
   useEffect(() => {
     if (selectedItem && selectedItem.options_grouped?.size) {
-      setSelectedOptions((prev) => ({
-        ...prev,
-        size: selectedItem.options_grouped.size[0].id,
-      }));
+      setActiveSize(selectedItem.options_grouped.size[0]?.name || "M");
     }
   }, [selectedItem]);
 
@@ -444,7 +516,9 @@ const MenuShowDelivery = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setSelectedItem(item);
-
+                          setActiveSize(
+                            item.options_grouped?.size?.[0]?.name || "M"
+                          );
                           setSelectedOptions({
                             dough: null,
                             sauce: null,
@@ -490,25 +564,14 @@ const MenuShowDelivery = () => {
                             <div className="flex gap-2">
                               {item.options_grouped?.size && (
                                 <div className="flex gap-1">
-                                  {item.options_grouped.size.map((size) => {
-                                    const isSelected =
-                                      selectedOptions.size === size.id;
-                                    return (
-                                      <span
-                                        key={size.id}
-                                        onClick={() =>
-                                          handleOptionSelect("size", size.id)
-                                        }
-                                        className={`py-1  text-sm rounded-xl border-2 text-center ${
-                                          isSelected
-                                            ? "border-orange-500 bg-orange-50 text-orange-600"
-                                            : "border-slate-100 text-slate-700"
-                                        }`}
-                                      >
-                                        {size.name}
-                                      </span>
-                                    );
-                                  })}
+                                  {item.options_grouped.size.map((size) => (
+                                    <span
+                                      key={size.id}
+                                      className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600"
+                                    >
+                                      {size.name}
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -572,49 +635,165 @@ const MenuShowDelivery = () => {
                 className="w-full h-40 sm:h-48 md:h-56 object-cover rounded-[1.5rem] sm:rounded-[2rem] mb-6 sm:mb-8 shadow-lg"
               />
 
-              {Object.entries(selectedItem.options_grouped).map(
-                ([groupKey, options]) => {
-                  const config = OPTION_GROUP_CONFIG[groupKey] || {};
-                  const isMultiple = config.type === "multiple";
-
-                  return (
-                    <div key={groupKey} className="mb-8">
-                      <p className="font-bold text-slate-600 mb-3 capitalize">
-                        {groupKey.replace("_", " ")}
-                        {config.required && (
-                          <span className="text-red-500 ml-1">*</span>
-                        )}
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {options.map((opt) => {
-                          const isSelected = isMultiple
-                            ? (selectedOptions[groupKey] || []).includes(opt.id)
-                            : selectedOptions[groupKey] === opt.id;
-
-                          return (
-                            <span
-                              key={opt.id}
-                              onClick={() =>
-                                handleOptionSelect(groupKey, opt.id)
-                              }
-                              className={`py-3 rounded-xl border-2 transition-all text-center
-                  ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-slate-100 text-slate-700"
-                  }`}
-                            >
-                              <div className="font-bold">{opt.name}</div>
-                              <div className="text-sm">+${opt.price}</div>
-                            </span>
-                          );
-                        })}
-                      </div>
+              {/* اختيار الحجم */}
+              {selectedItem.options_grouped?.size &&
+                selectedItem.options_grouped.size.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <p className="font-bold text-slate-600 mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Select The Size:
+                    </p>
+                    <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                      {selectedItem.options_grouped.size.map((sizeOption) => (
+                        <span
+                          key={sizeOption.id}
+                          onClick={() => setActiveSize(sizeOption.name)}
+                          className={`py-3 sm:py-4 rounded-xl sm:rounded-2xl border-2 transition-all flex flex-col items-center ${
+                            activeSize === sizeOption.name
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span className="font-black text-sm sm:text-lg">
+                            {sizeOption.name}
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold">
+                            ${sizeOption.price}
+                          </span>
+                        </span>
+                      ))}
                     </div>
-                  );
-                }
-              )}
+                  </div>
+                )}
+
+              {/* اختيار Dough */}
+              {selectedItem.options_grouped?.dough &&
+                selectedItem.options_grouped.dough.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <p className="font-bold text-slate-600 mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Select The Dough:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                      {selectedItem.options_grouped.dough.map((doughOption) => (
+                        <span
+                          key={doughOption.id}
+                          onClick={() =>
+                            handleOptionSelect("dough", doughOption.id)
+                          }
+                          className={`py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 transition-all flex flex-col items-center ${
+                            selectedOptions.dough === doughOption.id
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span className="font-bold text-sm sm:text-base truncate w-full text-center px-1">
+                            {doughOption.name}
+                          </span>
+                          <span className="text-xs sm:text-sm">
+                            +${doughOption.price}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* اختيار Sauce */}
+              {selectedItem.options_grouped?.sauce &&
+                selectedItem.options_grouped.sauce.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <p className="font-bold text-slate-600 mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Select The Sauce:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                      {selectedItem.options_grouped.sauce.map((sauceOption) => (
+                        <span
+                          key={sauceOption.id}
+                          onClick={() =>
+                            handleOptionSelect("sauce", sauceOption.id)
+                          }
+                          className={`py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 transition-all flex flex-col items-center ${
+                            selectedOptions.sauce === sauceOption.id
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span className="font-bold text-sm sm:text-base truncate w-full text-center px-1">
+                            {sauceOption.name}
+                          </span>
+                          <span className="text-xs sm:text-sm">
+                            +${sauceOption.price}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* اختيار Filling */}
+              {selectedItem.options_grouped?.filling &&
+                selectedItem.options_grouped.filling.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <p className="font-bold text-slate-600 mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Select The Filling:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                      {selectedItem.options_grouped.filling.map(
+                        (fillingOption) => (
+                          <span
+                            key={fillingOption.id}
+                            onClick={() =>
+                              handleOptionSelect("filling", fillingOption.id)
+                            }
+                            className={`py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 transition-all flex flex-col items-center ${
+                              selectedOptions.filling === fillingOption.id
+                                ? "border-orange-500 bg-orange-50 text-orange-600"
+                                : "border-slate-100 text-slate-700"
+                            }`}
+                          >
+                            <span className="font-bold text-sm sm:text-base truncate w-full text-center px-1">
+                              {fillingOption.name}
+                            </span>
+                            <span className="text-xs sm:text-sm">
+                              +${fillingOption.price}
+                            </span>
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {/* اختيار الإضافات */}
+              {selectedItem.options_grouped?.extra &&
+                selectedItem.options_grouped.extra.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <p className="font-bold text-slate-600 mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Select Extras:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                      {selectedItem.options_grouped.extra.map((extraOption) => (
+                        <span
+                          key={extraOption.id}
+                          onClick={() =>
+                            handleOptionSelect("extra", extraOption.id)
+                          }
+                          className={`py-2 sm:py-3 rounded-lg sm:rounded-xl border-2 transition-all flex flex-col items-center ${
+                            selectedOptions.extra.includes(extraOption.id)
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-100 text-slate-700"
+                          }`}
+                        >
+                          <span className="font-bold text-sm sm:text-base truncate w-full text-center px-1">
+                            {extraOption.name}
+                          </span>
+                          <span className="text-xs sm:text-sm">
+                            +${extraOption.price}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               {/* عرض السعر الإجمالي */}
               <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl">
@@ -623,16 +802,21 @@ const MenuShowDelivery = () => {
                     Total Price:
                   </span>
                   <span className="text-lg sm:text-xl md:text-2xl font-black text-orange-600">
-                    ${calculateItemTotal(selectedItem, selectedOptions)}
+                    $
+                    {calculateItemTotal(
+                      selectedItem,
+                      activeSize,
+                      selectedOptions
+                    )}
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-slate-500">
                   <p>Base Price: ${selectedItem.price}</p>
                   {selectedItem.options_grouped?.size && (
                     <p>
-                      Size ({selectedOptions.size}): +$
+                      Size ({activeSize}): +$
                       {selectedItem.options_grouped.size.find(
-                        (s) => s.name === selectedOptions.size
+                        (s) => s.name === activeSize
                       )?.price || "0.00"}
                     </p>
                   )}
@@ -641,17 +825,23 @@ const MenuShowDelivery = () => {
 
               {/* زر الإضافة للسلة */}
               <Button
-                onClick={() => addToCart(selectedItem, selectedOptions)}
+                onClick={() =>
+                  addToCart(selectedItem, activeSize, selectedOptions)
+                }
                 className="w-full py-4 sm:py-5 md:py-6 rounded-full bg-orange-500 hover:bg-orange-600 text-white font-black text-base sm:text-lg shadow-lg shadow-orange-200 transition-all"
               >
                 {selectedItem.options_grouped?.size &&
                 selectedItem.options_grouped.size.length > 0
-                  ? `Add ${selectedItem.name} (${
-                      selectedOptions.size
-                    }) - $${calculateItemTotal(selectedItem, selectedOptions)}`
+                  ? `Add ${
+                      selectedItem.name
+                    } (${activeSize}) - $${calculateItemTotal(
+                      selectedItem,
+                      activeSize,
+                      selectedOptions
+                    )}`
                   : `Add ${selectedItem.name} - $${calculateItemTotal(
                       selectedItem,
-
+                      null,
                       selectedOptions
                     )}`}
               </Button>
