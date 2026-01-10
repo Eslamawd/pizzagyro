@@ -7,6 +7,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/Dialog";
+
+import { motion } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, ShoppingCart, X } from "lucide-react";
@@ -21,6 +23,8 @@ const OPTION_GROUP_CONFIG = {
   sauce: { type: "single", required: false },
   filling: { type: "single", required: false },
   spice_level: { type: "single", required: false },
+
+  topping: { type: "multiple", required: false },
   extra: { type: "multiple", required: false, max: 5 },
 };
 
@@ -39,14 +43,13 @@ export default function AddToOrderButton({
 
   // عند فتح الدايلوج، نضبط الحجم الافتراضي
   useEffect(() => {
-    if (item && item.options_grouped?.size) {
-      setSelectedOptions((prev) => ({
-        ...prev,
-        size: item.options_grouped.size[0].id,
-      }));
+    if (item && item.options_grouped?.size && open) {
+      // نضع الـ id مباشرة كما في منطق handleOptionSelect للخيارات المفردة
+      setSelectedOptions({
+        size: { id: item.options_grouped.size[0].id, position: "whole" },
+      });
     }
-  }, [item]);
-
+  }, [item, open]);
   // ✅ دالة لحساب السعر النهائي
   const calculateItemTotal = () => {
     let total = Number(item.price);
@@ -55,12 +58,12 @@ export default function AddToOrderButton({
       const options = item.options_grouped?.[groupKey] || [];
 
       if (Array.isArray(value)) {
-        value.forEach((id) => {
-          const opt = options.find((o) => o.id === id);
+        value.forEach((selected) => {
+          const opt = options.find((o) => o.id === selected.id);
           if (opt) total += Number(opt.price || 0);
         });
       } else {
-        const opt = options.find((o) => o.id === value);
+        const opt = options.find((o) => o.id === value.id);
         if (opt) total += Number(opt.price || 0);
       }
     });
@@ -73,26 +76,68 @@ export default function AddToOrderButton({
     return calculateItemTotal();
   }, [selectedOptions, item.price, quantity]);
 
-  const handleOptionSelect = (groupKey, optionId) => {
+  // داخل دالة handleOptionSelect، نحتاج لتعديل تخزين الخيارات المتعددة ليشمل الـ position
+  const handleOptionSelect = (
+    groupKey,
+    optionId,
+    position = "whole",
+    name,
+    price
+  ) => {
     const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
 
     setSelectedOptions((prev) => {
       if (config.type === "multiple") {
         const current = prev[groupKey] || [];
-        const exists = current.includes(optionId);
+        // البحث عن الخيار داخل المصفوفة
+        const existingOptionIndex = current.findIndex((o) => o.id === optionId);
 
+        if (existingOptionIndex > -1) {
+          // إذا كان المستخدم يضغط على خيار موجود أصلاً
+          const existingOption = current[existingOptionIndex];
+
+          // لو ضغط على نفس الـ position الحالي -> نحذف الخيار (Toggle off)
+          if (existingOption.position === position) {
+            return {
+              ...prev,
+              [groupKey]: current.filter((o) => o.id !== optionId),
+            };
+          }
+
+          // لو اختار position مختلف (مثلاً كان يمين وخلاه شمال) -> نحدث الـ position فقط
+          const updatedOptions = [...current];
+          updatedOptions[existingOptionIndex] = {
+            id: optionId,
+            position: position,
+            name: name,
+            price: price,
+          };
+          return { ...prev, [groupKey]: updatedOptions };
+        }
+
+        // إضافة خيار جديد لأول مرة
         return {
           ...prev,
-          [groupKey]: exists
-            ? current.filter((id) => id !== optionId)
-            : [...current, optionId],
+          [groupKey]: [
+            ...current,
+            { id: optionId, position: position, name: name, price: price },
+          ],
         };
       }
 
-      // single
+      // المنطق الخاص بالـ Single Selection (مثل الحجم أو العجينة)
+      const currentSingle = prev[groupKey];
+      // إذا كان الخيار المختار هو نفسه الموجود حالياً وبنفس الـ position -> نلغيه
+      if (
+        currentSingle?.id === optionId &&
+        currentSingle?.position === position
+      ) {
+        return { ...prev, [groupKey]: null };
+      }
+
       return {
         ...prev,
-        [groupKey]: prev[groupKey] === optionId ? null : optionId,
+        [groupKey]: { id: optionId, position: position },
       };
     });
   };
@@ -109,9 +154,18 @@ export default function AddToOrderButton({
       const options = item.options_grouped?.[groupKey] || [];
 
       if (Array.isArray(value)) {
-        value.forEach((id) => {
-          const opt = options.find((o) => o.id === id);
-          if (opt) optionsArray.push(opt.id);
+        value.forEach((selected) => {
+          const opt = options.find((o) => o.id === selected.id);
+          if (opt) {
+            optionsArray.push({
+              id: opt.id,
+              position: selected.position || "whole",
+              name_en: opt.name_en,
+              name: opt.name,
+              price: opt.price,
+              option_type: opt.option_type, // إرسال الـ position
+            });
+          }
         });
       } else {
         const opt = options.find((o) => o.id === value);
@@ -198,23 +252,88 @@ export default function AddToOrderButton({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {options.map((opt) => {
                   const isSelected = isMultiple
-                    ? (selectedOptions[groupKey] || []).includes(opt.id)
-                    : selectedOptions[groupKey] === opt.id;
+                    ? (selectedOptions[groupKey] || []).some(
+                        (o) => o.id === opt.id
+                      )
+                    : selectedOptions[groupKey]?.id === opt.id;
+
+                  // استخراج الـ position الحالي لهذا الأوبشن
+                  const currentPos = isMultiple
+                    ? (selectedOptions[groupKey] || []).find(
+                        (o) => o.id === opt.id
+                      )?.position
+                    : selectedOptions[groupKey]?.id === opt.id
+                    ? selectedOptions[groupKey].position
+                    : "whole";
 
                   return (
-                    <span
-                      key={opt.id}
-                      onClick={() => handleOptionSelect(groupKey, opt.id)}
-                      className={`py-3 rounded-xl border-2 transition-all text-center
-                  ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-slate-100 text-slate-700"
-                  }`}
-                    >
-                      <div className="font-bold">{opt.name}</div>
-                      <div className="text-sm">+${opt.price}</div>
-                    </span>
+                    <div key={opt.id} className="flex flex-col gap-2">
+                      <div
+                        onClick={() =>
+                          handleOptionSelect(
+                            groupKey,
+                            opt.id,
+                            "whole",
+                            opt.name,
+                            opt.price
+                          )
+                        }
+                        className={`py-3 px-4 rounded-xl border-2 transition-all cursor-pointer flex justify-between items-center
+          ${
+            isSelected
+              ? "border-orange-500 bg-orange-50"
+              : "border-slate-100 bg-white"
+          }`}
+                      >
+                        <div className="text-right">
+                          <div className="font-bold text-slate-900">
+                            {opt.name}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            +${opt.price}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                        )}
+                      </div>
+
+                      {/* أزرار التقسيم: تظهر فقط إذا كان الخيار يدعم ذلك وتم اختياره */}
+                      {opt.half && isSelected && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg"
+                        >
+                          {[
+                            { id: "left", label: " Left" },
+                            { id: "whole", label: "Whole" },
+                            { id: "right", label: " Right" },
+                          ].map((pos) => (
+                            <span
+                              key={pos.id}
+                              onClick={() =>
+                                handleOptionSelect(
+                                  groupKey,
+                                  opt.id,
+                                  pos.id,
+                                  opt.name,
+                                  opt.price
+                                )
+                              }
+                              className={`text-[10px] py-1.5 rounded-md font-bold transition-all text-center
+                ${
+                  currentPos === pos.id
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500"
+                }`}
+                            >
+                              {pos.label}
+                            </span>
+                          ))}
+                        </motion.div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

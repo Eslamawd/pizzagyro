@@ -241,7 +241,7 @@ const CategoryCard = ({ category, onEdit, onDelete }) => {
             className="w-full h-40 object-cover rounded-xl mb-3"
           />
         )}
-        <h3 className="text-lg font-semibold text-white mb-2">
+        <h3 className="text-lg font-semibold  mb-2">
           {lang === "ar" ? category.name : category.name_en}
         </h3>
       </div>

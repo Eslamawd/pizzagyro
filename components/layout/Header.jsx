@@ -87,7 +87,6 @@ export const Header = () => {
                 <div className="relative">
                   <Link
                     href={"/delivry/orders"}
-                    onClick={() => setOrderShow(true)}
                     className=" p-1 justify-center text-center rounded-fullhover:scale-105"
                   >
                     <ShoppingCart className="h-8 w-8 text-orange-500" />

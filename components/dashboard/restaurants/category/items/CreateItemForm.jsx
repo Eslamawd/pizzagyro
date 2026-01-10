@@ -158,6 +158,7 @@ function CreateItemForm({ onSuccess, onCancel, category_id }) {
             name="price"
             type="number"
             min="0"
+            step="0.01"
             placeholder={lang === "ar" ? "أدخل السعر" : "Enter price"}
             value={formData.price}
             onChange={handleInputChange}
@@ -174,6 +175,7 @@ function CreateItemForm({ onSuccess, onCancel, category_id }) {
             name="old_price"
             type="number"
             min="0"
+            step="0.01"
             placeholder={
               lang === "ar"
                 ? "أدخل السعر القديم (اختياري)"

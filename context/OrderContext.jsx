@@ -166,7 +166,11 @@ export const OrderProvider = ({ children }) => {
         item_id: item.id,
         quantity: item.quantity,
         comment: item.comment || "",
-        options: item.options?.map((opt) => opt.id) || [],
+        options:
+          item.options?.map((opt) => ({
+            id: opt.id,
+            position: opt.position,
+          })) || [],
       })),
     };
   };

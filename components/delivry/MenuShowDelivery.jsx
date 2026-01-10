@@ -31,6 +31,7 @@ const OPTION_GROUP_CONFIG = {
   sauce: { type: "single", required: false },
   filling: { type: "single", required: false },
   spice_level: { type: "single", required: false },
+  topping: { type: "multiple", required: false },
   extra: { type: "multiple", required: false, max: 5 },
 };
 
@@ -117,22 +118,39 @@ const MenuShowDelivery = () => {
   const calculateItemTotal = (item, selectedOptions = {}) => {
     let total = Number(item.price);
 
-    Object.entries(item.options_grouped || {}).forEach(
-      ([groupKey, options]) => {
+    // تأكد من أن options_grouped موجود
+    if (item.options_grouped) {
+      Object.entries(item.options_grouped).forEach(([groupKey, options]) => {
         const selected = selectedOptions[groupKey];
         if (!selected) return;
 
         if (Array.isArray(selected)) {
-          selected.forEach((id) => {
-            const opt = options.find((o) => o.id === id);
-            if (opt) total += Number(opt.price || 0);
+          selected.forEach((optionObj) => {
+            // إذا كان selected مصفوفة من objects
+            if (typeof optionObj === "object" && optionObj.id) {
+              const opt = options.find((o) => o.id === optionObj.id);
+              if (opt) total += Number(opt.price || 0);
+            }
+            // إذا كان selected مصفوفة من IDs
+            else if (
+              typeof optionObj === "number" ||
+              typeof optionObj === "string"
+            ) {
+              const opt = options.find((o) => o.id == optionObj);
+              if (opt) total += Number(opt.price || 0);
+            }
           });
+        } else if (typeof selected === "object" && selected.id) {
+          // إذا كان selected object
+          const opt = options.find((o) => o.id === selected.id);
+          if (opt) total += Number(opt.price || 0);
         } else {
-          const opt = options.find((o) => o.id === selected);
+          // إذا كان selected ID مباشرة
+          const opt = options.find((o) => o.id == selected);
           if (opt) total += Number(opt.price || 0);
         }
-      }
-    );
+      });
+    }
 
     return Number(total.toFixed(2));
   };
@@ -141,7 +159,18 @@ const MenuShowDelivery = () => {
   const addToCart = (item, selectedOptions = {}) => {
     const size = selectedOptions.size;
     const finalPrice = calculateItemTotal(item, selectedOptions);
-    const cartItemId = size ? `${item.id}-${size}` : `${item.id}`;
+
+    const optionsKey = Object.entries(selectedOptions)
+      .map(([key, val]) => {
+        if (!val) return `${key}:none`; // handle null or undefined
+        if (Array.isArray(val))
+          return `${key}:${val.map((v) => v?.id || "none").join("-")}`;
+        if (typeof val === "object") return `${key}:${val.id || "none"}`;
+        return `${key}:${val}`;
+      })
+      .join("|");
+
+    const cartItemId = `${item.id}-${optionsKey}`;
 
     let displayName = item.name;
     if (size) {
@@ -153,19 +182,33 @@ const MenuShowDelivery = () => {
     // options details بدون تغيير
     const optionDetails = {};
     Object.entries(selectedOptions).forEach(([groupKey, value]) => {
-      const groupOptions = item.options_grouped?.[groupKey];
-      if (!groupOptions) return;
+      if (!value) return;
+
+      // ✅ لو value رقم (زي size)
+      if (typeof value === "number") {
+        optionDetails[groupKey] = {
+          id: value,
+          position: "whole",
+          name: value.name,
+          price: value.price,
+        };
+        return;
+      }
 
       if (Array.isArray(value)) {
-        optionDetails[groupKey] = value
-          .map((id) => {
-            const opt = groupOptions.find((o) => o.id === id);
-            return opt ? { id: opt.id, name: opt.name } : null;
-          })
-          .filter(Boolean);
-      } else if (value) {
-        const opt = groupOptions.find((o) => o.id === value);
-        if (opt) optionDetails[groupKey] = { id: opt.id, name: opt.name };
+        optionDetails[groupKey] = value.map((v) => ({
+          id: v.id,
+          position: v.position || "whole",
+          price: Number(v?.price || 0),
+          name: v.name,
+        }));
+      } else if (value?.id) {
+        optionDetails[groupKey] = {
+          id: value.id,
+          name: value.name,
+          price: Number(value?.price || 0),
+          position: value.position || "whole",
+        };
       }
     });
 
@@ -244,30 +287,34 @@ const MenuShowDelivery = () => {
       longitude: location.lng,
       phone: phone.trim(),
       items: cart.map((item) => {
-        // استخراج الـ item_id الحقيقي (إزالة جزء الحجم إذا موجود)
-        const itemId = item.id.includes("-") ? item.id.split("-")[0] : item.id;
-
-        // جمع جميع option IDs بشكل صحيح
-        const optionIds = [];
+        const formattedOptions = [];
 
         if (item.options) {
           Object.values(item.options).forEach((opt) => {
             if (Array.isArray(opt)) {
-              opt.forEach((o) => o.id && optionIds.push(o.id));
+              opt.forEach((o) => {
+                formattedOptions.push({
+                  id: o.id,
+                  position: o.position || "whole",
+                });
+              });
             } else if (opt?.id) {
-              optionIds.push(opt.id);
+              formattedOptions.push({
+                id: opt.id,
+                position: opt.position || "whole",
+              });
             }
           });
         }
 
         return {
-          item_id: parseInt(itemId),
+          item_id: item.item_id || parseInt(item.id),
           quantity: item.qty,
-          price: item.price,
-          options: optionIds, // مصفوفة من الـ IDs فقط
-          comment: item.size ? `Size: ${item.size}` : "",
+          price: item.price, // السعر النهائي
+          options: formattedOptions, // ✅ ID + position فقط
         };
       }),
+
       total_price: cartTotal.toFixed(2),
     };
 
@@ -283,32 +330,69 @@ const MenuShowDelivery = () => {
       toast.error("Failed to create delivery order. Please try again.");
     }
   };
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  const cartTotal = cart.reduce((sum, item) => {
-    const itemTotal = calculateItemTotal(item, item.options);
-    return sum + itemTotal * item.qty;
-  }, 0);
-
-  const handleOptionSelect = (groupKey, optionId) => {
+  const handleOptionSelect = (
+    groupKey,
+    optionId,
+    position = "whole",
+    name,
+    price
+  ) => {
     const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
 
     setSelectedOptions((prev) => {
       if (config.type === "multiple") {
         const current = prev[groupKey] || [];
-        const exists = current.includes(optionId);
+        // البحث عن الخيار داخل المصفوفة
+        const existingOptionIndex = current.findIndex((o) => o.id === optionId);
 
+        if (existingOptionIndex > -1) {
+          // إذا كان المستخدم يضغط على خيار موجود أصلاً
+          const existingOption = current[existingOptionIndex];
+
+          // لو ضغط على نفس الـ position الحالي -> نحذف الخيار (Toggle off)
+          if (existingOption.position === position) {
+            return {
+              ...prev,
+              [groupKey]: current.filter((o) => o.id !== optionId),
+            };
+          }
+
+          // لو اختار position مختلف (مثلاً كان يمين وخلاه شمال) -> نحدث الـ position فقط
+          const updatedOptions = [...current];
+          updatedOptions[existingOptionIndex] = {
+            id: optionId,
+            position: position,
+            name: name,
+            price: price,
+          };
+          return { ...prev, [groupKey]: updatedOptions };
+        }
+
+        // إضافة خيار جديد لأول مرة
         return {
           ...prev,
-          [groupKey]: exists
-            ? current.filter((id) => id !== optionId)
-            : [...current, optionId],
+          [groupKey]: [
+            ...current,
+            { id: optionId, position: position, name: name, price: price },
+          ],
         };
       }
 
-      // single
+      // المنطق الخاص بالـ Single Selection (مثل الحجم أو العجينة)
+      const currentSingle = prev[groupKey];
+      // إذا كان الخيار المختار هو نفسه الموجود حالياً وبنفس الـ position -> نلغيه
+      if (
+        currentSingle?.id === optionId &&
+        currentSingle?.position === position
+      ) {
+        return { ...prev, [groupKey]: null };
+      }
+
       return {
         ...prev,
-        [groupKey]: prev[groupKey] === optionId ? null : optionId,
+        [groupKey]: { id: optionId, position: position },
       };
     });
   };
@@ -337,6 +421,52 @@ const MenuShowDelivery = () => {
       }));
     }
   }, [selectedItem]);
+
+  const renderCartOptions = (item) => {
+    if (!item.options || Object.keys(item.options).length === 0) return null;
+
+    return (
+      <div className="text-xs text-slate-500 mt-1 space-y-0.5">
+        {Object.entries(item.options).map(([groupKey, value]) => {
+          if (!value) return null;
+
+          // ===== MULTIPLE OPTIONS =====
+          if (Array.isArray(value)) {
+            return value.map((v, idx) => (
+              <p key={`${groupKey}-${idx}`}>
+                {groupKey.replace("_", " ")}:
+                <span className="font-medium ml-1">{v.name}</span>
+                {Number(v.price) > 0 && (
+                  <span className="text-orange-500 ml-1">
+                    (+${Number(v.price).toFixed(2)})
+                  </span>
+                )}
+                {v.position && v.position !== "whole" && (
+                  <span className="text-slate-400 ml-1">[{v.position}]</span>
+                )}
+              </p>
+            ));
+          }
+
+          // ===== SINGLE OPTION =====
+          return (
+            <p key={groupKey}>
+              {groupKey.replace("_", " ")}:
+              <span className="font-medium ml-1">{value.name}</span>
+              {Number(value.price) > 0 && (
+                <span className="text-orange-500 ml-1">
+                  (+${Number(value.price).toFixed(2)})
+                </span>
+              )}
+              {value.position && value.position !== "whole" && (
+                <span className="text-slate-400 ml-1">[{value.position}]</span>
+              )}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <section className="min-h-screen mt-30 w-full pb-32 font-sans">
@@ -492,7 +622,7 @@ const MenuShowDelivery = () => {
                                 <div className="flex gap-1">
                                   {item.options_grouped.size.map((size) => {
                                     const isSelected =
-                                      selectedOptions.size === size.id;
+                                      selectedOptions.size.id === size.id;
                                     return (
                                       <span
                                         key={size.id}
@@ -589,25 +719,88 @@ const MenuShowDelivery = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {options.map((opt) => {
                           const isSelected = isMultiple
-                            ? (selectedOptions[groupKey] || []).includes(opt.id)
-                            : selectedOptions[groupKey] === opt.id;
+                            ? (selectedOptions[groupKey] || []).some(
+                                (o) => o.id === opt.id
+                              )
+                            : selectedOptions[groupKey]?.id === opt.id;
+
+                          // استخراج الـ position الحالي لهذا الأوبشن
+                          const currentPos = isMultiple
+                            ? (selectedOptions[groupKey] || []).find(
+                                (o) => o.id === opt.id
+                              )?.position
+                            : selectedOptions[groupKey]?.id === opt.id
+                            ? selectedOptions[groupKey].position
+                            : "whole";
 
                           return (
-                            <span
-                              key={opt.id}
-                              onClick={() =>
-                                handleOptionSelect(groupKey, opt.id)
-                              }
-                              className={`py-3 rounded-xl border-2 transition-all text-center
-                  ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-slate-100 text-slate-700"
-                  }`}
-                            >
-                              <div className="font-bold">{opt.name}</div>
-                              <div className="text-sm">+${opt.price}</div>
-                            </span>
+                            <div key={opt.id} className="flex flex-col gap-2">
+                              <div
+                                onClick={() =>
+                                  handleOptionSelect(
+                                    groupKey,
+                                    opt.id,
+                                    "whole",
+                                    opt.name,
+                                    opt.price
+                                  )
+                                }
+                                className={`py-3 px-4 rounded-xl border-2 transition-all cursor-pointer flex justify-between items-center
+          ${
+            isSelected
+              ? "border-orange-500 bg-orange-50"
+              : "border-slate-100 bg-white"
+          }`}
+                              >
+                                <div className="text-right">
+                                  <div className="font-bold text-slate-900">
+                                    {opt.name}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    +${opt.price}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                )}
+                              </div>
+
+                              {/* أزرار التقسيم: تظهر فقط إذا كان الخيار يدعم ذلك وتم اختياره */}
+                              {opt.half && isSelected && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg"
+                                >
+                                  {[
+                                    { id: "left", label: " Left" },
+                                    { id: "whole", label: "Whole" },
+                                    { id: "right", label: " Right" },
+                                  ].map((pos) => (
+                                    <span
+                                      key={pos.id}
+                                      onClick={() =>
+                                        handleOptionSelect(
+                                          groupKey,
+                                          opt.id,
+                                          pos.id,
+                                          opt.name,
+                                          opt.price
+                                        )
+                                      }
+                                      className={`text-[10px] py-1.5 rounded-md font-bold transition-all text-center
+                ${
+                  currentPos === pos.id
+                    ? "bg-white text-orange-600 shadow-sm"
+                    : "text-slate-500"
+                }`}
+                                    >
+                                      {pos.label}
+                                    </span>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -630,7 +823,7 @@ const MenuShowDelivery = () => {
                   <p>Base Price: ${selectedItem.price}</p>
                   {selectedItem.options_grouped?.size && (
                     <p>
-                      Size ({selectedOptions.size}): +$
+                      Size ({selectedOptions.size.name}): +$
                       {selectedItem.options_grouped.size.find(
                         (s) => s.name === selectedOptions.size
                       )?.price || "0.00"}
@@ -710,56 +903,34 @@ const MenuShowDelivery = () => {
                           {item.name}
                         </h4>
                         {item.options && (
-                          <div className="text-xs text-slate-500 mt-1">
-                            {item.options.dough &&
-                              typeof item.options.dough === "object" && (
-                                <p>Dough: {item.options.dough.name}</p>
-                              )}
-                            {item.options.sauce &&
-                              typeof item.options.sauce === "object" && (
-                                <p>Sauce: {item.options.sauce.name}</p>
-                              )}
-                            {item.options.filling &&
-                              typeof item.options.filling === "object" && (
-                                <p>Filling: {item.options.filling.name}</p>
-                              )}
-                            {item.options.extra &&
-                              Array.isArray(item.options.extra) &&
-                              item.options.extra.length > 0 && (
-                                <p>
-                                  Extra:{" "}
-                                  {item.options.extra
-                                    .map((e) =>
-                                      typeof e === "object" ? e.name : String(e)
-                                    )
-                                    .join(", ")}
-                                </p>
-                              )}
+                          <div className="text-xs text-slate-500 mt-1 space-y-0.5">
+                            {renderCartOptions(item)}
                           </div>
                         )}
+
                         <p className="text-orange-600 font-bold text-sm mt-1">
                           ${item.price}
                         </p>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                        <div className="flex items-center gap-2 bg-white p-1 rounded-full border">
-                          <Button
+                        <div className="flex items-center justify-center gap-2 bg-white p-1 rounded-full ">
+                          <span
                             size="icon"
                             variant="ghost"
-                            className="h-6 w-6 rounded-full text-orange-600"
+                            className="h-6 w-6 text-center justify-center items-center  rounded-full  text-orange-100"
                             onClick={() => updateQty(item.id, -1)}
                           >
-                            <Minus size={12} />
-                          </Button>
+                            <Minus className="text-red-800" size={22} />
+                          </span>
                           <span className="font-bold text-sm">{item.qty}</span>
-                          <Button
+                          <span
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6 rounded-full text-orange-600"
                             onClick={() => updateQty(item.id, 1)}
                           >
-                            <Plus size={12} />
-                          </Button>
+                            <Plus className="text-orange-500" size={22} />
+                          </span>
                         </div>
                         <Button
                           variant="ghost"

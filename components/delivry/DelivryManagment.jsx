@@ -345,6 +345,21 @@ function DelivryManagment({ kitchen, restaurant_id, user_id, token }) {
                                   key={opt.id}
                                   className="flex w-full items-center"
                                 >
+                                  {opt.pivot?.position === "right" && (
+                                    <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      RIGHT
+                                    </span>
+                                  )}
+                                  {opt.pivot?.position === "left" && (
+                                    <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      LEFT
+                                    </span>
+                                  )}
+                                  {opt.pivot?.position === "whole" && (
+                                    <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      ALL
+                                    </span>
+                                  )}
                                   <p className="text-white/80">
                                     <strong className="text-lg text-orange-400">
                                       {" "}

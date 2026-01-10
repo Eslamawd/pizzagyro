@@ -111,16 +111,40 @@ export default function OrdersShowDelivry() {
       sauce: isArabic ? "الصلصة" : "Sauce",
       filling: isArabic ? "الحشوة" : "Filling",
       extra: isArabic ? "إضافات" : "Extra",
+      topping: isArabic ? "الإضافات" : "Toppings",
     };
 
     return Object.entries(grouped).map(([type, opts]) => (
-      <div key={type} className="text-xs mt-1">
-        <span className="font-semibold">{labels[type] || type}:</span>{" "}
-        {opts.map((o) => (isArabic ? o.name : o.name_en)).join(", ")}
+      <div key={type} className="text-xs mt-2 border-l-2 border-slate-100 pl-2">
+        <span className="font-bold text-slate-500 block mb-1">
+          {labels[type] || type}:
+        </span>
+        <div className="flex flex-wrap gap-1">
+          {opts.map((o, index) => (
+            <div
+              key={index}
+              className="flex items-center bg-slate-50 px-1 py-0.5 rounded border border-slate-200"
+            >
+              {/* عرض ملصق الموقع فقط إذا كان موجوداً وغير "whole" */}
+              {o.pivot?.position === "right" && (
+                <span className="bg-orange-600 text-white text-[8px] px-1 rounded-sm mr-1 font-bold uppercase">
+                  R
+                </span>
+              )}
+              {o.pivot?.position === "left" && (
+                <span className="bg-blue-600 text-white text-[8px] px-1 rounded-sm mr-1 font-bold uppercase">
+                  L
+                </span>
+              )}
+              <span className="text-slate-700">
+                {isArabic ? o.name : o.name_en}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     ));
   };
-
   /* =========================
      ⛔ No Orders
   ========================== */

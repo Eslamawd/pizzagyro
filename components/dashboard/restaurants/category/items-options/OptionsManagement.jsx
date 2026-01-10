@@ -283,6 +283,7 @@ const OptionCard = ({ option, onEdit, onDelete }) => {
 const OptionForm = ({ isNew, option, itemId, onSuccess, onCancel }) => {
   const [name, setName] = useState(option?.name || "");
   const [price, setPrice] = useState(option?.price || "");
+  const [half, setHalf] = useState(option?.half || false);
   const [option_type, setOptionType] = useState(option?.option_type || "");
   // ✅ السعر الصحيح
   const { lang } = useLanguage();
@@ -292,6 +293,7 @@ const OptionForm = ({ isNew, option, itemId, onSuccess, onCancel }) => {
       const payload = {
         name,
         price,
+        half,
         option_type: option_type,
         item_id: itemId,
       };
@@ -355,6 +357,15 @@ const OptionForm = ({ isNew, option, itemId, onSuccess, onCancel }) => {
         value={price}
         onChange={(e) => setPrice(e.target.value)}
       />
+
+      <label className="flex items-center gap-2 mt-4  text-sm">
+        <input
+          type="checkbox"
+          checked={half}
+          onChange={(e) => setHalf(e.target.checked)}
+        />
+        {lang === "ar" ? "يسمح بالنصف" : "Allow half"}
+      </label>
 
       <select
         className="w-3/5 p-3 mt-4 bg-gray-800 text-white  rounded-lg border border-gray-700"

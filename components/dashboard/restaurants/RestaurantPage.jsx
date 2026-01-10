@@ -363,6 +363,13 @@ const RestaurantPage = ({ id }) => {
                       </Button>
                     </Link>
                   </div>
+                  {menu.image && (
+                    <img
+                      src={menu.image}
+                      alt={menu.name}
+                      className="w-28 h-28 object-cover rounded-xl mb-3"
+                    />
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -376,7 +383,7 @@ const RestaurantPage = ({ id }) => {
         {/* Tables */}
         <section className="mt-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold ">
               {lang === "ar" ? "الطاولات" : "Tables"}
             </h2>
             <Button
@@ -472,7 +479,7 @@ const RestaurantPage = ({ id }) => {
         {/* Restaurant Links */}
         <section className="mt-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold ">
               {lang === "ar" ? "روابط المطعم" : "Restaurant Links"}
             </h2>
 

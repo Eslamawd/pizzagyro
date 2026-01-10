@@ -115,12 +115,12 @@ export default function OrdersShow({ restaurant_id, user_id, token }) {
   };
 
   // ✅ دالة لعرض خيارات العنصر
+  // ✅ دالة محسنة لعرض خيارات العنصر مع التقسيم (يمين/يسار)
   const renderItemOptions = (options) => {
     if (!options || !Array.isArray(options) || options.length === 0) {
       return null;
     }
 
-    // تجميع الخيارات حسب النوع
     const groupedOptions = {};
     options.forEach((option) => {
       if (!groupedOptions[option.option_type]) {
@@ -139,23 +139,56 @@ export default function OrdersShow({ restaurant_id, user_id, token }) {
         topping: isArabic ? "الطبقة العلوية" : "Topping",
       };
 
+      const positionNames = {
+        left: isArabic ? " (يسار)" : " (Left)",
+        right: isArabic ? " (يمين)" : " (Right)",
+        whole: "", // لا داعي لكتابة "كامل" لتقليل الازدحام
+      };
+
       const totalOptionPrice = opts.reduce(
         (sum, opt) => sum + parseFloat(opt.price || 0),
         0
       );
 
       return (
-        <div key={index} className="text-xs text-white/80 mt-1">
-          <span className="font-medium">{typeNames[type] || type}:</span>{" "}
+        <div
+          key={index}
+          className="text-xs text-white/80 mt-1 flex flex-wrap gap-1"
+        >
+          <span className="font-medium text-orange-200">
+            {typeNames[type] || type}:
+          </span>
           {opts.map((opt, idx) => (
-            <span key={opt.id}>
+            <span
+              key={opt.id}
+              className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10"
+            >
+              {opt.pivot?.position === "right" && (
+                <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                  RIGHT
+                </span>
+              )}
+              {opt.pivot?.position === "left" && (
+                <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                  LEFT
+                </span>
+              )}
+              {opt.pivot?.position === "whole" && (
+                <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                  ALL
+                </span>
+              )}
               {isArabic ? opt.name : opt.name_en}
-              {idx < opts.length - 1 ? ", " : ""}
+              {/* عرض الموقع (يمين/يسار) إذا كان موجوداً */}
+              <span className="text-[10px] text-yellow-400 font-bold">
+                {positionNames[opt.position] || ""}
+              </span>
+              {idx < opts.length - 1 ? "، " : ""}
             </span>
           ))}
           {totalOptionPrice > 0 && (
-            <span className="text-orange-300 ml-1">
-              (+{formatPrice(totalOptionPrice)})
+            <span className="text-emerald-400 ml-1">
+              ({formatPrice(totalOptionPrice)})
             </span>
           )}
         </div>
@@ -231,7 +264,7 @@ export default function OrdersShow({ restaurant_id, user_id, token }) {
                         {isArabic ? item.name : item.name_en} × {item.quantity}
                       </h3>
                       <p className="text-gray-200 text-sm">
-                        {formatPrice(item.price)} × {item.quantity}
+                        {item.price} × {item.quantity}
                       </p>
                     </div>
 
@@ -282,9 +315,7 @@ export default function OrdersShow({ restaurant_id, user_id, token }) {
               <p className="text-lg font-semibold text-white">
                 {isArabic ? "الإجمالي:" : "Total:"}
               </p>
-              <p className="text-2xl font-bold text-yellow-300">
-                {formatPrice(totalPrice)}
-              </p>
+              <p className="text-2xl font-bold text-yellow-300">{totalPrice}</p>
             </div>
 
             <Button
@@ -372,20 +403,17 @@ export default function OrdersShow({ restaurant_id, user_id, token }) {
                               {item.quantity}
                             </h4>
                             <p className="text-gray-200 text-xs">
-                              {formatPrice(item.price)} × {item.quantity}
+                              {item.price} × {item.quantity}
                             </p>
                           </div>
 
                           <p className="text-orange-300 font-bold">
-                            {formatPrice(
-                              (parseFloat(item.price || 0) +
-                                (item.options?.reduce(
-                                  (sum, opt) =>
-                                    sum + parseFloat(opt.price || 0),
-                                  0
-                                ) || 0)) *
-                                item.quantity
-                            )}
+                            {(parseFloat(item.price || 0) +
+                              (item.options?.reduce(
+                                (sum, opt) => sum + parseFloat(opt.price || 0),
+                                0
+                              ) || 0)) *
+                              item.quantity}
                           </p>
                         </div>
 
