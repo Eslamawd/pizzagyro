@@ -415,9 +415,15 @@ const MenuShowDelivery = () => {
   // --- عند اختيار عنصر جديد، نضبط الحجم الافتراضي ---
   useEffect(() => {
     if (selectedItem && selectedItem.options_grouped?.size) {
+      const defaultSize = selectedItem.options_grouped.size[0];
       setSelectedOptions((prev) => ({
         ...prev,
-        size: selectedItem.options_grouped.size[0].id,
+        size: {
+          id: defaultSize.id,
+          name: defaultSize.name,
+          price: defaultSize.price,
+          position: "whole",
+        },
       }));
     }
   }, [selectedItem]);
