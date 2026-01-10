@@ -628,7 +628,8 @@ const MenuShowDelivery = () => {
                                 <div className="flex gap-1">
                                   {item.options_grouped.size.map((size) => {
                                     const isSelected =
-                                      selectedOptions.size.id === size.id;
+                                      selectedOptions.size?.id === size.id ||
+                                      selectedOptions.size === size.id;
                                     return (
                                       <span
                                         key={size.id}
