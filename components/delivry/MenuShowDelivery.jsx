@@ -828,12 +828,10 @@ const MenuShowDelivery = () => {
                 </div>
                 <div className="text-xs sm:text-sm text-slate-500">
                   <p>Base Price: ${selectedItem.price}</p>
-                  {selectedItem.options_grouped?.size && (
+                  {selectedOptions.size?.name && (
                     <p>
                       Size ({selectedOptions.size.name}): +$
-                      {selectedItem.options_grouped.size.find(
-                        (s) => s.name === selectedOptions.size
-                      )?.price || "0.00"}
+                      {selectedOptions.size.price || "0.00"}
                     </p>
                   )}
                 </div>
@@ -847,11 +845,10 @@ const MenuShowDelivery = () => {
                 {selectedItem.options_grouped?.size &&
                 selectedItem.options_grouped.size.length > 0
                   ? `Add ${selectedItem.name} (${
-                      selectedOptions.size
+                      selectedOptions.size?.name
                     }) - $${calculateItemTotal(selectedItem, selectedOptions)}`
                   : `Add ${selectedItem.name} - $${calculateItemTotal(
                       selectedItem,
-
                       selectedOptions
                     )}`}
               </Button>
