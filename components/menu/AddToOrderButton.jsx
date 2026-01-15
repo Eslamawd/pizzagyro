@@ -57,14 +57,28 @@ export default function AddToOrderButton({
     Object.entries(selectedOptions).forEach(([groupKey, value]) => {
       const options = item.options_grouped?.[groupKey] || [];
 
+      const getToppingPrice = (originalPrice) => {
+        let p = Number(originalPrice || 0);
+
+        // التصحيح هنا: نتحقق إذا كان الجروب هو توبينج أو إكسترا
+        if (groupKey === "topping" || groupKey === "extra") {
+          const currentSize = selectedOptions.size?.name?.toLowerCase() || "";
+
+          if (currentSize === "m" || currentSize === "medium") p += 0.25;
+          else if (currentSize === "l" || currentSize === "large") p += 0.5;
+          else if (currentSize.includes("xl")) p += 0.75;
+        }
+        return p;
+      };
+
       if (Array.isArray(value)) {
         value.forEach((selected) => {
           const opt = options.find((o) => o.id === selected.id);
-          if (opt) total += Number(opt.price || 0);
+          if (opt) total += getToppingPrice(opt.price);
         });
       } else {
         const opt = options.find((o) => o.id === value.id);
-        if (opt) total += Number(opt.price || 0);
+        if (opt) total += getToppingPrice(opt.price);
       }
     });
 
@@ -137,7 +151,12 @@ export default function AddToOrderButton({
 
       return {
         ...prev,
-        [groupKey]: { id: optionId, position: position },
+        [groupKey]: {
+          id: optionId,
+          position: position,
+          name: name,
+          price: price,
+        },
       };
     });
   };

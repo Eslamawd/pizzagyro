@@ -116,45 +116,48 @@ const MenuShowDelivery = () => {
   }, []);
 
   const calculateItemTotal = (item, selectedOptions = {}) => {
-    let total = Number(item.price);
+    // 1. نبدأ بسعر البيتزا الأساسي (لو السايز له سعر مختلف يفضل استخدامه هنا)
+    let total = Number(item.price || 0);
 
-    // تأكد من أن options_grouped موجود
     if (item.options_grouped) {
       Object.entries(item.options_grouped).forEach(([groupKey, options]) => {
         const selected = selectedOptions[groupKey];
         if (!selected) return;
 
-        if (Array.isArray(selected)) {
-          selected.forEach((optionObj) => {
-            // إذا كان selected مصفوفة من objects
-            if (typeof optionObj === "object" && optionObj.id) {
-              const opt = options.find((o) => o.id === optionObj.id);
-              if (opt) total += Number(opt.price || 0);
-            }
-            // إذا كان selected مصفوفة من IDs
-            else if (
-              typeof optionObj === "number" ||
-              typeof optionObj === "string"
-            ) {
-              const opt = options.find((o) => o.id == optionObj);
-              if (opt) total += Number(opt.price || 0);
-            }
-          });
-        } else if (typeof selected === "object" && selected.id) {
-          // إذا كان selected object
-          const opt = options.find((o) => o.id === selected.id);
-          if (opt) total += Number(opt.price || 0);
-        } else {
-          // إذا كان selected ID مباشرة
-          const opt = options.find((o) => o.id == selected);
-          if (opt) total += Number(opt.price || 0);
-        }
+        const getToppingPrice = (originalPrice) => {
+          let p = Number(originalPrice || 0);
+
+          // التصحيح هنا: نتحقق إذا كان الجروب هو توبينج أو إكسترا
+          if (groupKey === "topping" || groupKey === "extra") {
+            const currentSize = selectedOptions.size?.name?.toLowerCase() || "";
+
+            if (currentSize === "m" || currentSize === "medium") p += 0.25;
+            else if (currentSize === "l" || currentSize === "large") p += 0.5;
+            else if (currentSize.includes("xl")) p += 0.75;
+          }
+          return p;
+        };
+
+        // تحويل المختار إلى مصفوفة للتعامل الموحد
+        const selectedArray = Array.isArray(selected) ? selected : [selected];
+
+        selectedArray.forEach((optionObj) => {
+          if (!optionObj) return;
+
+          // استخراج الـ ID سواء كان المختار Object أو ID مباشر
+          const targetId =
+            typeof optionObj === "object" ? optionObj.id : optionObj;
+          const opt = options.find((o) => o.id == targetId);
+
+          if (opt) {
+            total += getToppingPrice(opt.price);
+          }
+        });
       });
     }
 
-    return Number(total.toFixed(2));
+    return total.toFixed(2);
   };
-
   // --- دالات السلة المحسنة ---// --- دالات السلة المحسنة ---
   const addToCart = (item, selectedOptions = {}) => {
     const size = selectedOptions.size;
@@ -392,7 +395,12 @@ const MenuShowDelivery = () => {
 
       return {
         ...prev,
-        [groupKey]: { id: optionId, position: position },
+        [groupKey]: {
+          id: optionId,
+          position: position,
+          name: name,
+          price: price,
+        },
       };
     });
   };
@@ -739,6 +747,17 @@ const MenuShowDelivery = () => {
                             : selectedOptions[groupKey]?.id === opt.id
                             ? selectedOptions[groupKey].position
                             : "whole";
+                          const s =
+                            selectedOptions.size?.name?.toLowerCase() || "";
+                          let displayPrice = Number(opt.price || 0);
+
+                          if (groupKey === "topping" || groupKey === "extra") {
+                            if (s === "m" || s === "medium")
+                              displayPrice += 0.25;
+                            else if (s === "l" || s === "large")
+                              displayPrice += 0.5;
+                            else if (s === "xl") displayPrice += 0.75;
+                          }
 
                           return (
                             <div key={opt.id} className="flex flex-col gap-2">
@@ -749,7 +768,7 @@ const MenuShowDelivery = () => {
                                     opt.id,
                                     "whole",
                                     opt.name,
-                                    opt.price
+                                    displayPrice
                                   )
                                 }
                                 className={`py-3 px-4 rounded-xl border-2 transition-all cursor-pointer flex justify-between items-center
@@ -764,7 +783,7 @@ const MenuShowDelivery = () => {
                                     {opt.name}
                                   </div>
                                   <div className="text-xs text-slate-500">
-                                    +${opt.price}
+                                    +${displayPrice.toFixed(2)}
                                   </div>
                                 </div>
                                 {isSelected && (
@@ -792,7 +811,7 @@ const MenuShowDelivery = () => {
                                           opt.id,
                                           pos.id,
                                           opt.name,
-                                          opt.price
+                                          displayPrice
                                         )
                                       }
                                       className={`text-[10px] py-1.5 rounded-md font-bold transition-all text-center
