@@ -345,6 +345,18 @@ const MenuShowDelivery = () => {
   ) => {
     const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
 
+    if (config.type === "multiple") {
+      const current = selectedOptions[groupKey] || [];
+      const existingOption = current.find((o) => o.id === optionId);
+
+      // إذا كان المستخدم يحاول إضافة خيار جديد (وليس تعديل خيار موجود)
+      if (!existingOption && current.length >= (config.max || Infinity)) {
+        toast.error(
+          `Maximum ${config.max} options allowed for ${groupKey.replace("_", " ")}`,
+        );
+        return; // نخرج ولا نحدث الحالة
+      }
+    }
     setSelectedOptions((prev) => {
       if (config.type === "multiple") {
         const current = prev[groupKey] || [];
