@@ -27,12 +27,13 @@ import { addNewOrderDelivery } from "@/lib/orderApi";
 
 const OPTION_GROUP_CONFIG = {
   size: { type: "single", required: true },
-  dough: { type: "single", required: false },
-  sauce: { type: "single", required: false },
+  dough: { type: "single", required: true },
+  sauce: { type: "single", required: true },
   filling: { type: "single", required: false },
   spice_level: { type: "single", required: false },
   topping: { type: "multiple", required: false },
   extra: { type: "multiple", required: false, max: 5 },
+  other: { type: "multiple", required: false, max: 5 },
 };
 
 const MenuShowDelivery = () => {
@@ -62,7 +63,7 @@ const MenuShowDelivery = () => {
             headers: {
               "User-Agent": "DeliveryApp/1.0 eeslamawood@gmail.com",
             },
-          }
+          },
         );
         if (!res.ok) throw new Error("Failed to fetch address");
         const data = await res.json();
@@ -97,7 +98,7 @@ const MenuShowDelivery = () => {
             isSet: true,
           });
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000 },
       );
     }
   }, []);
@@ -219,7 +220,7 @@ const MenuShowDelivery = () => {
       const existing = prev.find((i) => i.id === cartItemId);
       if (existing)
         return prev.map((i) =>
-          i.id === cartItemId ? { ...i, qty: i.qty + 1 } : i
+          i.id === cartItemId ? { ...i, qty: i.qty + 1 } : i,
         );
 
       return [
@@ -247,9 +248,9 @@ const MenuShowDelivery = () => {
         .map((item) =>
           item.id === id
             ? { ...item, qty: Math.max(1, item.qty + delta) }
-            : item
+            : item,
         )
-        .filter((item) => item.qty > 0)
+        .filter((item) => item.qty > 0),
     );
   };
 
@@ -340,7 +341,7 @@ const MenuShowDelivery = () => {
     optionId,
     position = "whole",
     name,
-    price
+    price,
   ) => {
     const config = OPTION_GROUP_CONFIG[groupKey] || { type: "single" };
 
@@ -735,18 +736,18 @@ const MenuShowDelivery = () => {
                         {options.map((opt) => {
                           const isSelected = isMultiple
                             ? (selectedOptions[groupKey] || []).some(
-                                (o) => o.id === opt.id
+                                (o) => o.id === opt.id,
                               )
                             : selectedOptions[groupKey]?.id === opt.id;
 
                           // استخراج الـ position الحالي لهذا الأوبشن
                           const currentPos = isMultiple
                             ? (selectedOptions[groupKey] || []).find(
-                                (o) => o.id === opt.id
+                                (o) => o.id === opt.id,
                               )?.position
                             : selectedOptions[groupKey]?.id === opt.id
-                            ? selectedOptions[groupKey].position
-                            : "whole";
+                              ? selectedOptions[groupKey].position
+                              : "whole";
                           const s =
                             selectedOptions.size?.name?.toLowerCase() || "";
                           let displayPrice = Number(opt.price || 0);
@@ -768,7 +769,7 @@ const MenuShowDelivery = () => {
                                     opt.id,
                                     "whole",
                                     opt.name,
-                                    displayPrice
+                                    displayPrice,
                                   )
                                 }
                                 className={`py-3 px-4 rounded-xl border-2 transition-all cursor-pointer flex justify-between items-center
@@ -811,7 +812,7 @@ const MenuShowDelivery = () => {
                                           opt.id,
                                           pos.id,
                                           opt.name,
-                                          displayPrice
+                                          displayPrice,
                                         )
                                       }
                                       className={`text-[10px] py-1.5 rounded-md font-bold transition-all text-center
@@ -832,7 +833,7 @@ const MenuShowDelivery = () => {
                       </div>
                     </div>
                   );
-                }
+                },
               )}
 
               {/* عرض السعر الإجمالي */}
@@ -868,7 +869,7 @@ const MenuShowDelivery = () => {
                     }) - $${calculateItemTotal(selectedItem, selectedOptions)}`
                   : `Add ${selectedItem.name} - $${calculateItemTotal(
                       selectedItem,
-                      selectedOptions
+                      selectedOptions,
                     )}`}
               </Button>
             </motion.div>
