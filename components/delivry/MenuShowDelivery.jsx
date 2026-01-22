@@ -996,7 +996,13 @@ const MenuShowDelivery = () => {
                   <div className="flex justify-between text-lg font-black text-slate-900">
                     <span>Total:</span>
                     <span className="text-orange-600">
-                      ${cartTotal.toFixed(2)}
+                      ${(cartTotal + 5 + cartTotal * 0.095).toFixed(2)}
+                    </span>
+                    <span>Delivery:</span>
+                    <span className="text-orange-600">5.00</span>
+                    <span>TAX:</span>
+                    <span className="text-orange-600">
+                      {(cartTotal * 0.095).toFixed(2)}
                     </span>
                   </div>
                   <Button
