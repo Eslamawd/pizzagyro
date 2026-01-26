@@ -293,6 +293,13 @@ const MenuShowDelivery = () => {
       location.lng,
     );
 
+    if (cartTotal < 50) {
+      toast.error(
+        "Minimum order amount is $50. Please add more items to your cart.",
+      );
+      return;
+    }
+
     if (distance > 5) {
       toast.error(
         `Sorry, we only deliver within 5 miles. Your distance is ${distance.toFixed(1)} miles.`,
