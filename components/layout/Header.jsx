@@ -63,14 +63,6 @@ export const Header = () => {
 
           {/* Buttons */}
           <div className="flex items-center gap-3">
-            {/* Language Toggle */}
-            <span
-              onClick={toggleLang}
-              className="flex items-center gap-1 px-2 py-1 rounded-full border border-gray-600 hover:border-gray-400 text-sm transition cursor-pointer"
-            >
-              {lang === "ar" ? "EN" : "AR"}
-            </span>
-
             {/* Admin / Dashboard */}
             {user && user.role === "admin" && (
               <Link

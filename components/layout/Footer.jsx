@@ -54,26 +54,7 @@ export const Footer = () => {
             <h3 className="text-lg font-black text-slate-900 uppercase tracking-wider">
               {isAr ? "روابط سريعة" : "Quick Links"}
             </h3>
-            <ul className="space-y-4">
-              {["Menu", "About", "Offers", "Reviews"].map((item, i) => (
-                <li key={i}>
-                  <Link
-                    href={`/${item.toLowerCase()}`}
-                    className="text-slate-500 font-bold hover:text-orange-500 transition-colors"
-                  >
-                    {isAr
-                      ? i === 0
-                        ? "المنيو"
-                        : i === 1
-                        ? "من نحن"
-                        : i === 2
-                        ? "العروض"
-                        : "الآراء"
-                      : item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <ul className="space-y-4"></ul>
           </div>
 
           {/* Opening Hours */}
@@ -108,7 +89,7 @@ export const Footer = () => {
                 <span className="text-slate-500 font-bold leading-tight">
                   {isAr
                     ? "123 شارع البيتزا، نيوجيرسي، أمريكا"
-                    : "123 Pizza St, New Jersey, USA"}
+                    : "5500 Murfreesboro Rd., La Vergne TN 37086, USA"}
                 </span>
               </div>
               <div className="flex items-center gap-3">

@@ -159,6 +159,21 @@ const MenuShowDelivery = () => {
 
     return total.toFixed(2);
   };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 3958.8; // نصف قطر الأرض بالأميال
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // المسافة بالأميال
+  };
+
   // --- دالات السلة المحسنة ---// --- دالات السلة المحسنة ---
   const addToCart = (item, selectedOptions = {}) => {
     const size = selectedOptions.size;
@@ -259,10 +274,29 @@ const MenuShowDelivery = () => {
   };
 
   const newOrderDelivery = async () => {
+    // إحداثيات المطعم الخاصة بك التي زودتني بها
+    const RESTAURANT_LAT = 36.01244975;
+    const RESTAURANT_LNG = -86.5487051;
+
     if (!location.isSet || !location.address) {
       toast.error("Please set your delivery location first!");
       setShowCart(false);
       setShowLocModal(true);
+      return;
+    }
+
+    // --- الجزء الجديد: فحص المسافة ---
+    const distance = calculateDistance(
+      RESTAURANT_LAT,
+      RESTAURANT_LNG,
+      location.lat,
+      location.lng,
+    );
+
+    if (distance > 5) {
+      toast.error(
+        `Sorry, we only deliver within 5 miles. Your distance is ${distance.toFixed(1)} miles.`,
+      );
       return;
     }
 

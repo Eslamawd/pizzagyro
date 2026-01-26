@@ -19,8 +19,8 @@ L.Icon.Default.mergeOptions({
 
 export default function LocationPicker({ location, setLocation, onClose }) {
   const [coords, setCoords] = useState({
-    lat: 30.0444,
-    lng: 31.2357, // Cairo default
+    lat: 36.01244975,
+    lng: -86.5487051,
   });
 
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`,
-        { headers: { "User-Agent": "DeliveryApp/1.0" } }
+        { headers: { "User-Agent": "DeliveryApp/1.0" } },
       );
       const a = (await res.json()).address || {};
       return (
@@ -103,7 +103,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`,
-            { headers: { "User-Agent": "DeliveryApp/1.0" } }
+            { headers: { "User-Agent": "DeliveryApp/1.0" } },
           );
           const data = await res.json();
           const a = data.address || {};
@@ -133,7 +133,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
         toast.error("Please enable GPS");
         setLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 
@@ -160,7 +160,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${query}&accept-language=en&limit=5`,
-          { headers: { "User-Agent": "DeliveryApp/1.0" } }
+          { headers: { "User-Agent": "DeliveryApp/1.0" } },
         );
         const data = await res.json();
         setSearchResults(data);
