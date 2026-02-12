@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { RESTAURANT_DATA } from "./RestaurantData";
 import LocationPicker from "./LocationPicker";
+import CloverPayment from "./CloverPayment";
 import { getMenus } from "@/lib/menuApi";
 import { addNewOrderDelivery } from "@/lib/orderApi";
 
@@ -53,6 +54,9 @@ const MenuShowDelivery = () => {
   const [phone, setPhone] = useState("");
   const [showLocModal, setShowLocModal] = useState(false);
   const [menus, setMenus] = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentToken, setPaymentToken] = useState(null);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
   useEffect(() => {
     const fetchLocation = async (lat, lng) => {
@@ -273,7 +277,7 @@ const MenuShowDelivery = () => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const newOrderDelivery = async () => {
+  const newOrderDelivery = async (token = null) => {
     // إحداثيات المطعم الخاصة بك التي زودتني بها
     const RESTAURANT_LAT = 36.01244975;
     const RESTAURANT_LNG = -86.5487051;
@@ -293,9 +297,9 @@ const MenuShowDelivery = () => {
       location.lng,
     );
 
-    if (cartTotal < 50) {
+    if (cartTotal < 25) {
       toast.error(
-        "Minimum order amount is $50. Please add more items to your cart.",
+        "Minimum order amount is $25. Please add more items to your cart.",
       );
       return;
     }
@@ -324,55 +328,64 @@ const MenuShowDelivery = () => {
       return;
     }
 
-    // تحضير بيانات الطلب
-    const orderData = {
-      restaurant_id: menus[0]?.restaurant_id || 1,
-      address: location.address,
-      latitude: location.lat,
-      longitude: location.lng,
-      phone: phone.trim(),
-      items: cart.map((item) => {
-        const formattedOptions = [];
-
-        if (item.options) {
-          Object.values(item.options).forEach((opt) => {
-            if (Array.isArray(opt)) {
-              opt.forEach((o) => {
-                formattedOptions.push({
-                  id: o.id,
-                  position: o.position || "whole",
-                });
-              });
-            } else if (opt?.id) {
-              formattedOptions.push({
-                id: opt.id,
-                position: opt.position || "whole",
-              });
-            }
-          });
-        }
-
-        return {
-          item_id: item.item_id || parseInt(item.id),
-          quantity: item.qty,
-          price: item.price, // السعر النهائي
-          options: formattedOptions, // ✅ ID + position فقط
-        };
-      }),
-
-      total_price: cartTotal.toFixed(2),
-    };
-
-    console.log("Order data to send:", JSON.stringify(orderData, null, 2));
+    setIsProcessingOrder(true);
 
     try {
+      // تحضير بيانات الطلب
+      const orderData = {
+        restaurant_id: menus[0]?.restaurant_id || 1,
+        address: location.address,
+        latitude: location.lat,
+        longitude: location.lng,
+        phone: phone.trim(),
+        items: cart.map((item) => {
+          const formattedOptions = [];
+
+          if (item.options) {
+            Object.values(item.options).forEach((opt) => {
+              if (Array.isArray(opt)) {
+                opt.forEach((o) => {
+                  formattedOptions.push({
+                    id: o.id,
+                    position: o.position || "whole",
+                  });
+                });
+              } else if (opt?.id) {
+                formattedOptions.push({
+                  id: opt.id,
+                  position: opt.position || "whole",
+                });
+              }
+            });
+          }
+
+          return {
+            item_id: item.item_id || parseInt(item.id),
+            quantity: item.qty,
+            price: item.price,
+            options: formattedOptions,
+          };
+        }),
+
+        total_price: cartTotal.toFixed(2),
+        payment_token: token, // 💳 الـ token مع الـ order
+      };
+
+      console.log("Order data:", JSON.stringify(orderData, null, 2));
+
+      // 🔄 بعت الـ order مع الـ token في نفس الـ request
       await addNewOrderDelivery(orderData);
+
       setCart([]);
       setShowCart(false);
+      setShowPaymentModal(false);
+      setPaymentToken(null);
       toast.success("Order created successfully! 🎉");
     } catch (error) {
       console.error("Order error:", error);
       toast.error("Failed to create delivery order. Please try again.");
+    } finally {
+      setIsProcessingOrder(false);
     }
   };
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -1049,7 +1062,7 @@ const MenuShowDelivery = () => {
                   <Button
                     className="w-full py-6 rounded-full bg-slate-900 hover:bg-black text-white font-black text-lg shadow-xl transition-all"
                     onClick={() => {
-                      newOrderDelivery();
+                      setShowPaymentModal(true);
                     }}
                   >
                     Proceed to Checkout
@@ -1108,6 +1121,20 @@ const MenuShowDelivery = () => {
           </Button>
         </motion.div>
       )}
+
+      {/* 8. مودال الدفع Clover */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <CloverPayment
+            cartTotal={cartTotal}
+            onPaymentSuccess={(token) => {
+              setPaymentToken(token);
+              newOrderDelivery(token);
+            }}
+            onClose={() => setShowPaymentModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };

@@ -23,14 +23,16 @@ button {
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.35s ease;
-  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3),
+  box-shadow:
+    0 4px 20px rgba(6, 182, 212, 0.3),
     0 2px 8px rgba(52, 211, 153, 0.2);
   backdrop-filter: blur(6px); /* glass effect */
 }
 
 button:hover {
   transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(255, 208, 19, 0.4),
+  box-shadow:
+    0 8px 25px rgba(255, 208, 19, 0.4),
     0 4px 12px rgba(255, 165, 40, 0.763);
   background: linear-gradient(135deg, #5d5d5d, #ffa83e);
   color: #000;
@@ -77,4 +79,76 @@ a {
 
 .animate-gradient {
   animation: gradient 60s ease infinite;
+}
+
+/* 🔐 Clover Iframe Styling - تعديلات حاسمة */
+#card-element {
+  width: 100% !important;
+  min-height: 120px !important;
+  height: auto !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  padding: 12px !important;
+  background: white !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  color: #1e293b !important;
+  overflow: visible !important;
+}
+
+/* إجبار الـ Clover iframe على الظهور */
+#card-element iframe {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 32px !important;
+  display: block !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* إزالة أي overflow */
+#card-element > * {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Clover Elements Container */
+.clover-element-container {
+  min-height: 56px;
+  padding: 0;
+  width: 100%;
+}
+
+/* إزالة تأثيرات الـ global button من الأزرار الخاصة */
+.clover-payment-modal button {
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 16px !important;
+  background: #2563eb !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+.clover-payment-modal button:hover {
+  background: #1d4ed8 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.clover-payment-modal button:disabled {
+  background: #cbd5e1 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
 }
