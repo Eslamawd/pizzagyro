@@ -94,7 +94,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
       const clover = new window.Clover({
         publicToken: PUBLIC_TOKEN,
-        environment: ENV_MODE === "production" ? "production" : "sandbox",
+        environment: "sandbox",
       });
 
       const elements = clover.elements();
