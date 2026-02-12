@@ -11,13 +11,16 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
   const [token, setToken] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [cloverReady, setCloverReady] = useState(false);
+  const [cardError, setCardError] = useState("");
 
   // Use useRef instead of useState to avoid re-render
   const cardElementRef = useRef(null);
   const cardElement = useRef(null);
+  const cloverInstanceRef = useRef(null);
   const cloverInitialized = useRef(false);
 
   const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX;
+  const MERCHANT_ID = process.env.NEXT_PUBLIC_CLOVER_MERCHANT_ID_SANDBOX;
 
   const totalAmount = (cartTotal + 5 + cartTotal * 0.095).toFixed(2);
 
@@ -35,6 +38,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
       // If Clover is already loaded, use it
       if (window.Clover) {
         initializeClover();
+        return;
+      }
+
+      const existingScript = document.getElementById("clover-sdk-script");
+      if (existingScript) {
+        existingScript.addEventListener("load", initializeClover, {
+          once: true,
+        });
         return;
       }
 
@@ -64,6 +75,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
     // Cleanup function: manual cleanup of DOM before React unmounts
     return () => {
       isMounted = false;
+      if (
+        cardElement.current &&
+        typeof cardElement.current.destroy === "function"
+      ) {
+        cardElement.current.destroy();
+      }
+      cardElement.current = null;
+      cloverInstanceRef.current = null;
       // Most important step: completely empty the div before component unmounts
       if (cardElementRef.current) {
         cardElementRef.current.innerHTML = "";
@@ -75,6 +94,19 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
   // 🔧 Initialize Clover and create Card Element
   const initializeClover = () => {
     try {
+      if (cloverInitialized.current) {
+        return;
+      }
+
+      if (!PUBLIC_TOKEN || !MERCHANT_ID) {
+        console.error("Missing Clover Credentials", {
+          PUBLIC_TOKEN,
+          MERCHANT_ID,
+        });
+        toast.error("Clover credentials are missing");
+        return;
+      }
+
       const container = cardElementRef.current;
       if (!container) {
         console.error("❌ Card element container not found");
@@ -86,9 +118,8 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
         container.innerHTML = "";
       }
 
-      const clover = new window.Clover({
-        publicToken: PUBLIC_TOKEN,
-        environment: "sandbox",
+      const clover = new window.Clover(PUBLIC_TOKEN, {
+        merchantId: MERCHANT_ID,
       });
 
       const elements = clover.elements();
@@ -113,12 +144,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
       // Mount the card element in the specified div
       card.mount("#card-element");
+      card.addEventListener("change", (event) => {
+        setCardError(event?.error || "");
+      });
       cardElement.current = card; // Save it in useRef not useState
+      cloverInstanceRef.current = clover;
+      cloverInitialized.current = true;
       setCloverReady(true);
       console.log("✅ Clover card element mounted successfully");
-
-      // Save clover instance for later use
-      window.cloverInstance = clover;
     } catch (error) {
       console.error("Error initializing Clover:", error);
       toast.error("Error initializing payment system");
@@ -127,7 +160,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
   // 💳 Handle Payment - call clover.createToken()
   const handlePayment = async () => {
-    if (!cloverReady || !window.cloverInstance || !cardElement.current) {
+    if (!cloverReady || !cloverInstanceRef.current || !cardElement.current) {
       toast.error(
         "Payment system is not ready yet. Please try again in a moment",
       );
@@ -138,12 +171,19 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
     try {
       // Call clover.createToken() to get the real Token
-      const result = await window.cloverInstance.createToken(
-        cardElement.current,
-      );
+      const result = await cloverInstanceRef.current.createToken();
 
-      if (result.errors && result.errors.length > 0) {
-        const errorMessage = result.errors.map((err) => err.message).join(", ");
+      const rawErrors = result?.errors
+        ? Array.isArray(result.errors)
+          ? result.errors
+          : Object.values(result.errors)
+        : [];
+
+      if (rawErrors.length > 0) {
+        const errorMessage = rawErrors
+          .map((err) => (typeof err === "string" ? err : err?.message))
+          .filter(Boolean)
+          .join(", ");
         toast.error(`Card error: ${errorMessage}`);
         setLoading(false);
         return;
@@ -157,6 +197,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
       const generatedToken = result.token;
       setToken(generatedToken);
+      setCardError("");
 
       try {
         toast.success("✅ Card verified successfully!");
@@ -295,6 +336,11 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
                 <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
                   <Loader2 className="animate-spin" size={12} />
                   Loading payment system...
+                </p>
+              )}
+              {cardError && (
+                <p className="text-xs text-red-600 mt-1.5" role="alert">
+                  {cardError}
                 </p>
               )}
             </div>
