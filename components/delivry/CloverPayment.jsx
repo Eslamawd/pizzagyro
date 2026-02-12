@@ -46,7 +46,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
       // Create script tag for SDK
       const script = document.createElement("script");
-      script.src = "https://checkout.clover.com/sdk.js";
+      script.src = "https://checkout.sandbox.dev.clover.com/sdk.js";
       script.async = true;
       script.id = "clover-sdk-script";
       script.onload = () => {
