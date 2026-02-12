@@ -17,13 +17,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
   const cardElement = useRef(null);
   const cloverInitialized = useRef(false);
 
-  // 🔐 Clover Configuration (from .env)
-  const ENV_MODE = process.env.NEXT_PUBLIC_ENV_MODE || "sandbox";
-  const PUBLIC_TOKEN =
-    ENV_MODE === "production"
-      ? process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_PROD ||
-        process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX
-      : process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX;
+  const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX;
 
   const totalAmount = (cartTotal + 5 + cartTotal * 0.095).toFixed(2);
 
