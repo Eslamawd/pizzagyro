@@ -144,13 +144,11 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
       // Mount the card element in the specified div
       card.mount("#card-element");
-      card.addEventListener("change", (event) => {
-        setCardError(event?.error || "");
-      });
       cardElement.current = card; // Save it in useRef not useState
       cloverInstanceRef.current = clover;
       cloverInitialized.current = true;
       setCloverReady(true);
+      setCardError("");
       console.log("✅ Clover card element mounted successfully");
     } catch (error) {
       console.error("Error initializing Clover:", error);
@@ -184,6 +182,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
           .map((err) => (typeof err === "string" ? err : err?.message))
           .filter(Boolean)
           .join(", ");
+        setCardError(errorMessage || "Invalid card information");
         toast.error(`Card error: ${errorMessage}`);
         setLoading(false);
         return;
