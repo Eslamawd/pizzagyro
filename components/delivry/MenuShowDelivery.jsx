@@ -37,6 +37,34 @@ const OPTION_GROUP_CONFIG = {
   other: { type: "multiple", required: false, max: 5 },
 };
 
+const DELIVERY_RADIUS_MILES = 5.5;
+const MANUAL_RESTAURANT_LOCATION = {
+  lat: 29.8133358,
+  lng: 31.3785702,
+};
+
+const normalizeCoordinate = (value) => {
+  const numericValue =
+    typeof value === "string" ? parseFloat(value) : Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+const normalizePhoneDigits = (value) =>
+  (value || "").toString().replace(/\D/g, "");
+
+const normalizeUSPhone = (value) => {
+  const digits = normalizePhoneDigits(value);
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return digits.slice(1);
+  }
+  return digits;
+};
+
+const isValidUSPhone = (value) => {
+  const normalized = normalizeUSPhone(value);
+  return /^[2-9]\d{2}[2-9]\d{6}$/.test(normalized);
+};
+
 const MenuShowDelivery = () => {
   // --- States ---
   const [cart, setCart] = useState([]);
@@ -62,12 +90,7 @@ const MenuShowDelivery = () => {
     const fetchLocation = async (lat, lng) => {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`,
-          {
-            headers: {
-              "User-Agent": "DeliveryApp/1.0 eeslamawood@gmail.com",
-            },
-          },
+          `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
         );
         if (!res.ok) throw new Error("Failed to fetch address");
         const data = await res.json();
@@ -277,11 +300,81 @@ const MenuShowDelivery = () => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const newOrderDelivery = async (token = null) => {
-    // إحداثيات المطعم الخاصة بك التي زودتني بها
-    const RESTAURANT_LAT = 36.01244975;
-    const RESTAURANT_LNG = -86.5487051;
+  const canProceedToPayment = () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty!");
+      return false;
+    }
 
+    if (cartTotal < 25) {
+      toast.error(
+        "Minimum order amount is $25. Please add more items to your cart.",
+      );
+      return false;
+    }
+
+    if (!location.isSet || !location.address) {
+      toast.error("Please set your delivery location first!");
+      setShowCart(false);
+      setShowLocModal(true);
+      return false;
+    }
+
+    const customerLat = normalizeCoordinate(location.lat);
+    const customerLng = normalizeCoordinate(location.lng);
+
+    if (customerLat === null || customerLng === null) {
+      toast.error("Invalid customer location. Please reselect your location.");
+      setShowCart(false);
+      setShowLocModal(true);
+      return false;
+    }
+
+    const restaurantCoordinates = {
+      lat: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lat),
+      lng: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lng),
+    };
+
+    if (
+      restaurantCoordinates.lat === null ||
+      restaurantCoordinates.lng === null
+    ) {
+      toast.error(
+        "Restaurant location is unavailable. Please contact support.",
+      );
+      return false;
+    }
+
+    const distance = calculateDistance(
+      restaurantCoordinates.lat,
+      restaurantCoordinates.lng,
+      customerLat,
+      customerLng,
+    );
+
+    if (distance > DELIVERY_RADIUS_MILES) {
+      toast.error(
+        `Sorry, we only deliver within ${DELIVERY_RADIUS_MILES} miles. Your distance is ${distance.toFixed(1)} miles.`,
+      );
+      return false;
+    }
+
+    if (!phone?.trim()) {
+      toast.error("Please enter your phone number.");
+      return false;
+    }
+
+    if (!isValidUSPhone(phone)) {
+      toast.error(
+        "Please enter a valid US phone number (example: +1 615 555 1234).",
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const newOrderDelivery = async (token = null) => {
     if (!location.isSet || !location.address) {
       toast.error("Please set your delivery location first!");
       setShowCart(false);
@@ -289,12 +382,37 @@ const MenuShowDelivery = () => {
       return;
     }
 
+    const customerLat = normalizeCoordinate(location.lat);
+    const customerLng = normalizeCoordinate(location.lng);
+
+    if (customerLat === null || customerLng === null) {
+      toast.error("Invalid customer location. Please reselect your location.");
+      setShowCart(false);
+      setShowLocModal(true);
+      return;
+    }
+
+    const restaurantCoordinates = {
+      lat: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lat),
+      lng: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lng),
+    };
+
+    if (
+      restaurantCoordinates.lat === null ||
+      restaurantCoordinates.lng === null
+    ) {
+      toast.error(
+        "Restaurant location is unavailable. Please contact support.",
+      );
+      return;
+    }
+
     // --- الجزء الجديد: فحص المسافة ---
     const distance = calculateDistance(
-      RESTAURANT_LAT,
-      RESTAURANT_LNG,
-      location.lat,
-      location.lng,
+      restaurantCoordinates.lat,
+      restaurantCoordinates.lng,
+      customerLat,
+      customerLng,
     );
 
     if (cartTotal < 25) {
@@ -304,18 +422,28 @@ const MenuShowDelivery = () => {
       return;
     }
 
-    if (distance > 5) {
+    if (distance > DELIVERY_RADIUS_MILES) {
       toast.error(
-        `Sorry, we only deliver within 5 miles. Your distance is ${distance.toFixed(1)} miles.`,
+        `Sorry, we only deliver within ${DELIVERY_RADIUS_MILES} miles. Your distance is ${distance.toFixed(1)} miles.`,
       );
       return;
     }
 
-    if (!phone) {
-      toast.error("Please set your delivery Phone first!");
+    if (!phone?.trim()) {
+      toast.error("Please enter your phone number.");
       setShowCart(false);
       return;
     }
+
+    if (!isValidUSPhone(phone)) {
+      toast.error(
+        "Please enter a valid US phone number (example: +1 615 555 1234).",
+      );
+      setShowCart(false);
+      return;
+    }
+
+    const normalizedPhone = normalizeUSPhone(phone);
 
     if (cart.length === 0) {
       toast.error("Your cart is empty!");
@@ -335,9 +463,9 @@ const MenuShowDelivery = () => {
       const orderData = {
         restaurant_id: menus[0]?.restaurant_id || 1,
         address: location.address,
-        latitude: location.lat,
-        longitude: location.lng,
-        phone: phone.trim(),
+        latitude: customerLat,
+        longitude: customerLng,
+        phone: normalizedPhone,
         items: cart.map((item) => {
           const formattedOptions = [];
 
@@ -374,16 +502,23 @@ const MenuShowDelivery = () => {
       console.log("Order data:", JSON.stringify(orderData, null, 2));
 
       // 🔄 بعت الـ order مع الـ token في نفس الـ request
-      await addNewOrderDelivery(orderData);
+      const response = await addNewOrderDelivery(orderData);
 
-      setCart([]);
+      toast.success(`${response.message} 🎉`);
       setShowCart(false);
+      setCart([]);
+      setSelectedItem(null);
+      setSelectedOptions({});
       setShowPaymentModal(false);
       setPaymentToken(null);
       toast.success("Order created successfully! 🎉");
     } catch (error) {
-      console.error("Order error:", error);
-      toast.error("Failed to create delivery order. Please try again.");
+      const errorMessage =
+        error.response?.data?.message || error.message || "Error";
+
+      toast.error(`Failed to create order: ${errorMessage}`);
+
+      setShowPaymentModal(false);
     } finally {
       setIsProcessingOrder(false);
     }
@@ -1060,8 +1195,11 @@ const MenuShowDelivery = () => {
                     </span>
                   </div>
                   <Button
-                    className="w-full py-6 rounded-full bg-slate-900 hover:bg-black text-white font-black text-lg shadow-xl transition-all"
+                    className="w-full py-6 rounded-full bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-200 transition-all"
                     onClick={() => {
+                      if (!canProceedToPayment()) {
+                        return;
+                      }
                       setShowPaymentModal(true);
                     }}
                   >

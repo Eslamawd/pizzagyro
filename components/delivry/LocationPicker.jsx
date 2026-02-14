@@ -44,8 +44,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
   const resolveAddress = async (lat, lon) => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`,
-        { headers: { "User-Agent": "DeliveryApp/1.0" } },
+        `/api/geocode/reverse?lat=${lat}&lon=${lon}&language=en`,
       );
       const a = (await res.json()).address || {};
       return (
@@ -102,8 +101,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
         let address = "موقعك الحالي";
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`,
-            { headers: { "User-Agent": "DeliveryApp/1.0" } },
+            `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
           );
           const data = await res.json();
           const a = data.address || {};
@@ -159,8 +157,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
       }
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${query}&accept-language=en&limit=5`,
-          { headers: { "User-Agent": "DeliveryApp/1.0" } },
+          `/api/geocode/search?q=${encodeURIComponent(query)}&language=en&limit=5`,
         );
         const data = await res.json();
         setSearchResults(data);

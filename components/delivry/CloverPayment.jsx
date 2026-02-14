@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
 import { X, Loader2, Shield, Lock, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -14,8 +13,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
   const [cardError, setCardError] = useState("");
 
   // Use useRef instead of useState to avoid re-render
-  const cardElementRef = useRef(null);
-  const cardElement = useRef(null);
+  const cardElementsRef = useRef({});
   const cloverInstanceRef = useRef(null);
   const cloverInitialized = useRef(false);
 
@@ -75,19 +73,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
     // Cleanup function: manual cleanup of DOM before React unmounts
     return () => {
       isMounted = false;
-      if (
-        cardElement.current &&
-        typeof cardElement.current.destroy === "function"
-      ) {
-        cardElement.current.destroy();
-      }
-      cardElement.current = null;
+      Object.values(cardElementsRef.current).forEach((element) => {
+        if (element && typeof element.destroy === "function") {
+          element.destroy();
+        }
+      });
+      cardElementsRef.current = {};
       cloverInstanceRef.current = null;
-      // Most important step: completely empty the div before component unmounts
-      if (cardElementRef.current) {
-        cardElementRef.current.innerHTML = "";
-        console.log("✅ Cleaned up Clover DOM");
-      }
+      console.log("✅ Cleaned up Clover DOM");
     };
   }, []); // Empty dependencies = runs only once on mount
 
@@ -107,15 +100,18 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
         return;
       }
 
-      const container = cardElementRef.current;
-      if (!container) {
-        console.error("❌ Card element container not found");
+      const requiredMounts = [
+        "#card-number",
+        "#card-date",
+        "#card-cvv",
+        "#card-postal-code",
+      ];
+      const missingMounts = requiredMounts.filter(
+        (selector) => !document.querySelector(selector),
+      );
+      if (missingMounts.length > 0) {
+        console.error("❌ Clover mount containers not found", missingMounts);
         return;
-      }
-
-      // 🧹 Clean DOM before mount
-      if (container.innerHTML) {
-        container.innerHTML = "";
       }
 
       const clover = new window.Clover(PUBLIC_TOKEN, {
@@ -123,28 +119,65 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
       });
 
       const elements = clover.elements();
-      const card = elements.create("CARD", {
-        placeholder: "Card Number",
+      const style = {
         style: {
           base: {
-            fontSize: "16px",
+            fontSize: "15px",
             fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-            color: "#1e293b",
-            lineHeight: "1.5",
-            padding: "8px 12px",
+            color: "#9a3412",
+            lineHeight: "1.2",
+            padding: "0px",
             "::placeholder": {
-              color: "#94a3b8",
+              color: "#c2410c",
             },
           },
           invalid: {
             color: "#dc2626",
           },
         },
-      });
+      };
+
+      const cardNumber = elements.create("CARD_NUMBER", style);
+      const cardDate = elements.create("CARD_DATE", style);
+      const cardCvv = elements.create("CARD_CVV", style);
+      const cardPostalCode = elements.create("CARD_POSTAL_CODE", style);
+
+      const attachValidationListeners = (element) => {
+        if (!element || typeof element.addEventListener !== "function") {
+          return;
+        }
+        const handleEvent = (event) => {
+          const maybeError = event?.error;
+          if (typeof maybeError === "string") {
+            setCardError(maybeError);
+          } else if (maybeError?.message) {
+            setCardError(maybeError.message);
+          } else if (event?.empty || event?.complete) {
+            setCardError("");
+          }
+        };
+
+        element.addEventListener("change", handleEvent);
+        element.addEventListener("blur", handleEvent);
+      };
+
+      attachValidationListeners(cardNumber);
+      attachValidationListeners(cardDate);
+      attachValidationListeners(cardCvv);
+      attachValidationListeners(cardPostalCode);
 
       // Mount the card element in the specified div
-      card.mount("#card-element");
-      cardElement.current = card; // Save it in useRef not useState
+      cardNumber.mount("#card-number");
+      cardDate.mount("#card-date");
+      cardCvv.mount("#card-cvv");
+      cardPostalCode.mount("#card-postal-code");
+
+      cardElementsRef.current = {
+        cardNumber,
+        cardDate,
+        cardCvv,
+        cardPostalCode,
+      };
       cloverInstanceRef.current = clover;
       cloverInitialized.current = true;
       setCloverReady(true);
@@ -158,7 +191,11 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
   // 💳 Handle Payment - call clover.createToken()
   const handlePayment = async () => {
-    if (!cloverReady || !cloverInstanceRef.current || !cardElement.current) {
+    if (
+      !cloverReady ||
+      !cloverInstanceRef.current ||
+      !cardElementsRef.current.cardNumber
+    ) {
       toast.error(
         "Payment system is not ready yet. Please try again in a moment",
       );
@@ -235,20 +272,20 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
         {/* Header */}
         <div className="flex justify-between items-start mb-5 sm:mb-6">
           <div className="flex items-center gap-2 flex-1">
-            <div className="bg-blue-100 p-2 rounded-lg flex-shrink-0">
-              <Shield className="text-blue-600" size={20} />
+            <div className="bg-orange-100 p-2 rounded-lg flex-shrink-0">
+              <Shield className="text-orange-600" size={20} />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+              <h3 className="text-base sm:text-lg font-bold text-orange-700">
                 Secure Payment
               </h3>
-              <p className="text-xs text-slate-500">Clover Payments</p>
+              <p className="text-xs text-orange-500">Clover Payments</p>
             </div>
           </div>
           {!paymentSuccess && (
             <button
               onClick={onClose}
-              className="bg-slate-100 hover:bg-slate-200 p-1.5 rounded-full transition flex-shrink-0"
+              className="bg-orange-100 hover:bg-orange-200 text-orange-700 p-1.5 rounded-full transition flex-shrink-0"
               aria-label="Close"
             >
               <X size={16} />
@@ -263,23 +300,23 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-8"
           >
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.6 }}
               >
-                <Check className="text-green-600" size={32} />
+                <Check className="text-orange-600" size={32} />
               </motion.div>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-green-600 mb-2">
+            <h2 className="text-lg sm:text-xl font-bold text-orange-600 mb-2">
               Payment Successful! ✅
             </h2>
             <p className="text-sm text-slate-600 mb-4">
               Processing your order...
             </p>
-            <div className="bg-green-50 border border-green-200 p-2 rounded-lg text-center">
+            <div className="bg-orange-50 border border-orange-200 p-2 rounded-lg text-center">
               <p className="text-xs text-slate-500 mb-1">Token:</p>
-              <p className="text-xs font-mono text-green-600 break-all overflow-hidden line-clamp-2">
+              <p className="text-xs font-mono text-orange-600 break-all overflow-hidden line-clamp-2">
                 {token}
               </p>
             </div>
@@ -290,14 +327,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
         {!paymentSuccess && (
           <>
             {/* Security Info */}
-            <div className="mb-5 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="mb-5 p-3 bg-orange-50 rounded-lg border border-orange-200">
               <div className="flex items-start gap-2">
                 <Lock
                   size={14}
-                  className="text-blue-600 mt-0.5 flex-shrink-0"
+                  className="text-orange-600 mt-0.5 flex-shrink-0"
                 />
                 <p className="text-xs text-slate-700">
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-orange-600">
                     🔒 Secure Information
                   </span>
                   <br />
@@ -308,26 +345,51 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
 
             {/* Clover Card Element */}
             <div className="mb-5">
-              <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
+              <label className="block text-xs sm:text-sm font-bold text-orange-700 mb-2">
                 Card Information
               </label>
-              {/* Outer wrapper controlled by React */}
-              <div className="w-full border border-slate-300 rounded-lg bg-white transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
-                {/* This div is where Clover will insert the iframe - React won't see what happens inside */}
-                <div
-                  ref={cardElementRef}
-                  id="card-element"
-                  style={{
-                    minHeight: "60px",
-                    padding: "12px",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  {/* Don't put any Loader or text here - Clover will insert the iframe here */}
+              <div className="space-y-2">
+                <div className="w-full h-12 sm:h-14 border border-orange-300 rounded-lg bg-white px-3 flex items-center">
+                  <div
+                    id="card-number"
+                    style={{ width: "100%", height: "100%", minHeight: "0px" }}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="w-full h-12 sm:h-14 border border-orange-300 rounded-lg bg-white px-3 flex items-center sm:col-span-1">
+                    <div
+                      id="card-date"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "0px",
+                      }}
+                    />
+                  </div>
+                  <div className="w-full h-12 sm:h-14 border border-orange-300 rounded-lg bg-white px-3 flex items-center sm:col-span-1">
+                    <div
+                      id="card-cvv"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "0px",
+                      }}
+                    />
+                  </div>
+                  <div className="w-full h-12 sm:h-14 border border-orange-300 rounded-lg bg-white px-3 flex items-center sm:col-span-1">
+                    <div
+                      id="card-postal-code"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "0px",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               {cloverReady && (
-                <p className="text-xs text-green-600 mt-1.5">
+                <p className="text-xs text-orange-600 mt-1.5">
                   ✅ Payment system loaded - Enter your card details
                 </p>
               )}
@@ -345,27 +407,27 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
             </div>
 
             {/* Order Summary */}
-            <div className="mb-5 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="mb-5 p-3 bg-orange-50 rounded-lg border border-orange-200">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-slate-600">
+                <span className="text-sm font-medium text-orange-700">
                   Total Amount:
                 </span>
                 <span className="text-2xl font-bold text-orange-600">
                   ${totalAmount}
                 </span>
               </div>
-              <div className="space-y-1 text-xs text-slate-500 border-t border-slate-300 pt-2">
+              <div className="space-y-1 text-xs text-orange-700 border-t border-orange-300 pt-2">
                 <div className="flex justify-between">
                   <span>Items:</span>
                   <span>${cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery:</span>
-                  <span className="font-semibold text-slate-600">$5.00</span>
+                  <span className="font-semibold text-orange-700">$5.00</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (9.5%):</span>
-                  <span className="font-semibold text-slate-600">
+                  <span className="font-semibold text-orange-700">
                     ${(cartTotal * 0.095).toFixed(2)}
                   </span>
                 </div>
@@ -376,7 +438,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
             <button
               onClick={handlePayment}
               disabled={loading || !cloverReady}
-              className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md disabled:opacity-60 disabled:cursor-not-allowed transition-all border-0"
+              className="w-full py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-md disabled:opacity-60 disabled:cursor-not-allowed transition-all border-0"
               style={{
                 cursor: loading || !cloverReady ? "not-allowed" : "pointer",
               }}
@@ -394,7 +456,7 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
             </button>
 
             {/* Security Badge */}
-            <div className="flex items-center justify-center gap-1 mt-3 text-xs text-slate-500">
+            <div className="flex items-center justify-center gap-1 mt-3 text-xs text-orange-600">
               <Lock size={10} />
               <p>Security verified by Clover Payments</p>
             </div>
