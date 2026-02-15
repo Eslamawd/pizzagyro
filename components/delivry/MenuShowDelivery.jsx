@@ -49,6 +49,17 @@ const normalizeCoordinate = (value) => {
   return Number.isFinite(numericValue) ? numericValue : null;
 };
 
+const normalizeUSLongitude = (value) => {
+  const numericValue = normalizeCoordinate(value);
+  if (numericValue === null) return null;
+
+  if (numericValue > 0 && numericValue <= 180) {
+    return -numericValue;
+  }
+
+  return numericValue;
+};
+
 const normalizePhoneDigits = (value) =>
   (value || "").toString().replace(/\D/g, "");
 
@@ -321,7 +332,7 @@ const MenuShowDelivery = () => {
     }
 
     const customerLat = normalizeCoordinate(location.lat);
-    const customerLng = normalizeCoordinate(location.lng);
+    const customerLng = normalizeUSLongitude(location.lng);
 
     if (customerLat === null || customerLng === null) {
       toast.error("Invalid customer location. Please reselect your location.");
@@ -332,7 +343,7 @@ const MenuShowDelivery = () => {
 
     const restaurantCoordinates = {
       lat: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lat),
-      lng: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lng),
+      lng: normalizeUSLongitude(MANUAL_RESTAURANT_LOCATION.lng),
     };
 
     if (
@@ -383,7 +394,7 @@ const MenuShowDelivery = () => {
     }
 
     const customerLat = normalizeCoordinate(location.lat);
-    const customerLng = normalizeCoordinate(location.lng);
+    const customerLng = normalizeUSLongitude(location.lng);
 
     if (customerLat === null || customerLng === null) {
       toast.error("Invalid customer location. Please reselect your location.");
@@ -394,7 +405,7 @@ const MenuShowDelivery = () => {
 
     const restaurantCoordinates = {
       lat: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lat),
-      lng: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lng),
+      lng: normalizeUSLongitude(MANUAL_RESTAURANT_LOCATION.lng),
     };
 
     if (
