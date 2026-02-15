@@ -5,16 +5,16 @@ import { usePathname } from "next/navigation";
 
 export default function InstallPrompt() {
   const pathname = usePathname();
-  const [appName, setAppName] = useState("QREGY");
+  const [appName, setAppName] = useState("Pizza & Gyro");
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith("/cashier")) {
-      setAppName("QREGY Cashier");
+      setAppName("Pizza & Gyro Cashier");
     } else if (pathname.startsWith("/kitchen")) {
-      setAppName("QREGY Kitchen");
+      setAppName("Pizza & Gyro Kitchen");
     } else {
-      setAppName("QREGY Menu");
+      setAppName("Pizza & Gyro Menu");
     }
 
     const handler = () => setShowPrompt(true);
