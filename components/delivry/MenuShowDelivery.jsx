@@ -40,7 +40,7 @@ const OPTION_GROUP_CONFIG = {
 const DELIVERY_RADIUS_MILES = 5.5;
 const MANUAL_RESTAURANT_LOCATION = {
   lat: 36.01244975,
-  lng: 86.5487051,
+  lng: -86.5487051,
 };
 
 const normalizeCoordinate = (value) => {
