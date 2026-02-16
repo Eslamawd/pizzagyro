@@ -1,8 +1,8 @@
 {
   "name": "Pizza & Gyro",
   "short_name": "Pizza & Gyro",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/delivry",
+  "scope": "/delivry",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

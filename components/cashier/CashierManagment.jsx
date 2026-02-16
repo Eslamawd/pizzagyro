@@ -40,7 +40,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
         cashier,
         restaurant_id,
         user_id,
-        token
+        token,
       );
 
       if (data?.active === false) {
@@ -51,7 +51,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
       const sorted = data.sort(
         (a, b) =>
           new Date(b.created_at ?? 0).getTime() -
-          new Date(a.created_at ?? 0).getTime()
+          new Date(a.created_at ?? 0).getTime(),
       );
       setOrders(sorted);
     } catch (error) {
@@ -68,12 +68,12 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
         restaurant_id,
         user_id,
         token,
-        { status }
+        { status },
       );
 
       setOrders((prev) => {
         const updated = prev.map((order) =>
-          order.id === orderId ? { ...order, status } : order
+          order.id === orderId ? { ...order, status } : order,
         );
         return status === "paid"
           ? updated.filter((order) => order.id !== orderId)
@@ -97,7 +97,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
           .then(() => {
             // التشغيل نجح
             console.log(
-              `🔔 The notification sound was enabled on attempt number${attempt}.`
+              `🔔 The notification sound was enabled on attempt number${attempt}.`,
             );
           })
           .catch((err) => {
@@ -107,7 +107,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
             // **🚨 المحاولة الثانية المؤجلة (Retrial Logic)**
             if (attempt === 1) {
               console.log(
-                "🔄 A second attempt to play the sound after 500ms..."
+                "🔄 A second attempt to play the sound after 500ms...",
               );
               setTimeout(() => {
                 tryPlaySound(2); // المحاولة الثانية
@@ -159,7 +159,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
 
         onOrderUpdated(({ order_id, status }) => {
           setOrders((prev) =>
-            prev.map((o) => (o.id === order_id ? { ...o, status } : o))
+            prev.map((o) => (o.id === order_id ? { ...o, status } : o)),
           );
           handleNotifyNewOrder({ id: order_id });
         });
@@ -237,10 +237,10 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
               order.status === "ready"
                 ? "bg-green-900/50 border-green-600 ring-2 ring-green-500"
                 : order.status === "delivered"
-                ? "bg-blue-900/50 border-blue-600"
-                : order.status === "cancelled"
-                ? "bg-red-800 border-red-700"
-                : "bg-gray-800 border-gray-700"
+                  ? "bg-blue-900/50 border-blue-600"
+                  : order.status === "cancelled"
+                    ? "bg-red-800 border-red-700"
+                    : "bg-gray-800 border-gray-700"
             }`}
           >
             <div className="flex justify-between items-start mb-3">
@@ -261,25 +261,25 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                   order.status === "pending" || order.status === "cancelled"
                     ? "bg-red-500"
                     : order.status === "in_progress"
-                    ? "bg-yellow-500"
-                    : order.status === "ready"
-                    ? "bg-green-500"
-                    : order.status === "delivered"
-                    ? "bg-blue-500"
-                    : "bg-gray-500"
+                      ? "bg-yellow-500"
+                      : order.status === "ready"
+                        ? "bg-green-500"
+                        : order.status === "delivered"
+                          ? "bg-blue-500"
+                          : "bg-gray-500"
                 }`}
               >
                 {order.status === "pending"
                   ? "Pending"
                   : order.status === "in_progress"
-                  ? "In Progress"
-                  : order.status === "ready"
-                  ? "Ready for Payment"
-                  : order.status === "delivered"
-                  ? "Delivered"
-                  : order.status === "cancelled"
-                  ? "Cancelled"
-                  : "Paid"}
+                    ? "In Progress"
+                    : order.status === "ready"
+                      ? "Ready for Payment"
+                      : order.status === "delivered"
+                        ? "Delivered"
+                        : order.status === "cancelled"
+                          ? "Cancelled"
+                          : "Paid"}
               </span>
             </div>
 
@@ -288,8 +288,15 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                 {order.table?.name
                   ? `Table: ${order.table?.name}`
                   : order.address
-                  ? `Delivery: ${order.address}`
-                  : "N/A"}
+                    ? `Delivery: ${order.address}`
+                    : "N/A"}
+              </p>
+              <p>
+                {order.order_type === "pickup"
+                  ? "Pickup"
+                  : order.order_type === "delivery"
+                    ? "Delivery"
+                    : "N/A"}
               </p>
               <p className="text-lg font-bold text-white">
                 <strong>Total:</strong> {order.total_price} $
@@ -312,7 +319,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                         item.item?.image ||
                         `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
                           0,
-                          1
+                          1,
                         )}`
                       }
                       alt={item.item?.name}
@@ -320,7 +327,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                         e.target.onerror = null;
                         e.target.src = `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
                           0,
-                          1
+                          1,
                         )}`;
                       }}
                       className="w-16 h-16 object-cover rounded-md flex-shrink-0"
