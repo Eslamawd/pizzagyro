@@ -174,9 +174,10 @@ const useMenuShowDelivery = () => {
     });
   };
 
-  const addToCart = (item, currentSelectedOptions = {}) => {
+  const addToCart = (item, currentSelectedOptions = {}, itemComment = "") => {
     const optionsKey = buildOptionsKey(currentSelectedOptions);
-    const cartItemId = `${item.id}-${optionsKey}`;
+    const normalizedComment = itemComment?.trim() || "";
+    const cartItemId = `${item.id}-${optionsKey}-comment:${normalizedComment || "none"}`;
     const finalPrice = calculateItemTotal(item, currentSelectedOptions);
     const selectedSize = currentSelectedOptions.size;
 
@@ -207,13 +208,14 @@ const useMenuShowDelivery = () => {
           image: item.image,
           price: finalPrice,
           qty: 1,
+          comment: normalizedComment || null,
           options: optionDetails,
         },
       ];
     });
 
     setSelectedItem(null);
-    setSelectedOptions({});
+    setSelectedOptions(EMPTY_ITEM_SELECTION);
     toast.success(`Added ${displayName} 🍽️`);
   };
 

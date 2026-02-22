@@ -148,6 +148,7 @@ export const formatOrderItems = (cart) =>
       item_id: item.item_id || parseInt(item.id, 10),
       quantity: item.qty,
       price: item.price,
+      comment: item.comment || null,
       options: formattedOptions,
     };
   });

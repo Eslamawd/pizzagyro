@@ -68,6 +68,12 @@ const DeliveryCartDrawer = ({
                       <h4 className="font-bold text-sm text-slate-800">
                         {item.name}
                       </h4>
+                      {item.comment && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Comment:{" "}
+                          <span className="font-medium">{item.comment}</span>
+                        </p>
+                      )}
                       <DeliveryCartOptions item={item} />
                       <p className="text-orange-600 font-bold text-sm mt-1">
                         ${item.price}

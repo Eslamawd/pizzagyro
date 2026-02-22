@@ -66,13 +66,17 @@ export const Footer = () => {
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-green-600" />
                 <span>
-                  {isAr ? "يومياً: 11 ص - 12 م" : "Daily: 11 AM - 12 PM"}
+                  {isAr
+                    ? "يومياً: 11 ص - 12 م"
+                    : "Sunday - Thursday: 10 AM - 10 PM"}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-orange-500" />
                 <span>
-                  {isAr ? "الجمعة: 1 م - 2 ص" : "Friday: 1 PM - 2 AM"}
+                  {isAr
+                    ? "الجمعة: 1 م - 2 ص"
+                    : "Friday - Saturday: 10 AM - 11:30 PM"}
                 </span>
               </div>
             </div>
@@ -95,10 +99,10 @@ export const Footer = () => {
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-green-600" />
                 <a
-                  href="tel:+123456789"
+                  href="tel:+16152806373"
                   className="text-slate-900 font-black hover:text-orange-500 transition-colors"
                 >
-                  +1 (234) 567-890
+                  +1 (615) 280-6373
                 </a>
               </div>
               <div className="flex items-center gap-3">

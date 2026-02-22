@@ -1,6 +1,9 @@
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/Label";
+import { Textarea } from "@/components/ui/textarea";
 import { OPTION_GROUP_CONFIG } from "./constants";
 
 const DeliveryItemModal = ({
@@ -11,6 +14,17 @@ const DeliveryItemModal = ({
   onClose,
   onAddToCart,
 }) => {
+  const [comment, setComment] = useState("");
+
+  useEffect(() => {
+    setComment("");
+  }, [selectedItem?.id]);
+
+  const handleClose = () => {
+    setComment("");
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {selectedItem && (
@@ -36,7 +50,7 @@ const DeliveryItemModal = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={handleClose}
                 className="rounded-full bg-slate-100 flex-shrink-0 ml-2"
               >
                 <X size={16} />
@@ -164,6 +178,17 @@ const DeliveryItemModal = ({
               },
             )}
 
+            <div className="mb-6">
+              <Label>Comment:</Label>
+              <Textarea
+                placeholder="Add your comment here..."
+                className="w-full mt-1"
+                rows={3}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+            </div>
+
             <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-bold text-slate-600 text-sm sm:text-base">
@@ -185,7 +210,9 @@ const DeliveryItemModal = ({
             </div>
 
             <Button
-              onClick={() => onAddToCart(selectedItem, selectedOptions)}
+              onClick={() =>
+                onAddToCart(selectedItem, selectedOptions, comment.trim())
+              }
               className="w-full py-4 sm:py-5 md:py-6 rounded-full bg-orange-500 hover:bg-orange-600 text-white font-black text-base sm:text-lg shadow-lg shadow-orange-200 transition-all"
             >
               {selectedItem.options_grouped?.size &&
