@@ -133,6 +133,7 @@ const MenuShowDelivery = () => {
         {showPaymentModal && (
           <CloverPayment
             cartTotal={cartTotal}
+            orderType={orderType}
             isProcessingOrder={isProcessingOrder}
             paymentToken={paymentToken}
             onPaymentSuccess={(token) => {

@@ -5,7 +5,7 @@ import { X, Loader2, Shield, Lock, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
+const CloverPayment = ({ cartTotal, orderType, onPaymentSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -20,7 +20,9 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
   const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX;
   const MERCHANT_ID = process.env.NEXT_PUBLIC_CLOVER_MERCHANT_ID_SANDBOX;
 
-  const totalAmount = (cartTotal + 5 + cartTotal * 0.095).toFixed(2);
+  const deliveryFee = orderType === "delivery" ? 5 : 0;
+  const taxAmount = cartTotal * 0.095;
+  const totalAmount = (cartTotal + deliveryFee + taxAmount).toFixed(2);
 
   // 📦 Load Clover SDK - only once on mount
   useEffect(() => {
@@ -423,12 +425,14 @@ const CloverPayment = ({ cartTotal, onPaymentSuccess, onClose }) => {
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery:</span>
-                  <span className="font-semibold text-orange-700">$5.00</span>
+                  <span className="font-semibold text-orange-700">
+                    ${deliveryFee.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (9.5%):</span>
                   <span className="font-semibold text-orange-700">
-                    ${(cartTotal * 0.095).toFixed(2)}
+                    ${taxAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
