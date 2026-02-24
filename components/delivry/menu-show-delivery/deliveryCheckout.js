@@ -50,7 +50,7 @@ export const canProceedDeliveryPayment = ({
     return false;
   }
 
-  if (orderType === "delivery" && cartTotal < 25) {
+  if (orderType === "delivery" && cartTotal < 19) {
     toast.error(
       "Minimum order amount is $25. Please add more items to your cart.",
     );
