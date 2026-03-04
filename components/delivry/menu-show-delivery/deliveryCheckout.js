@@ -42,6 +42,9 @@ export const canProceedDeliveryPayment = ({
   orderType,
   location,
   phone,
+  customerName,
+  scheduledDate,
+  scheduledTime,
   setShowCart,
   setShowLocModal,
 }) => {
@@ -99,6 +102,16 @@ export const canProceedDeliveryPayment = ({
     return false;
   }
 
+  if (!customerName?.trim()) {
+    toast.error("Please enter customer name.");
+    return false;
+  }
+
+  if (!scheduledDate || !scheduledTime) {
+    toast.error("Please choose order date and time.");
+    return false;
+  }
+
   return true;
 };
 
@@ -110,6 +123,10 @@ export const submitDeliveryOrder = async ({
   location,
   menus,
   phone,
+  customerName,
+  tipPercentage,
+  scheduledDate,
+  scheduledTime,
   addNewOrderDelivery,
   setShowCart,
   setShowLocModal,
@@ -117,6 +134,10 @@ export const submitDeliveryOrder = async ({
   setCart,
   setSelectedItem,
   setSelectedOptions,
+  setCustomerName,
+  setTipPercentage,
+  setScheduledDate,
+  setScheduledTime,
   setPaymentToken,
   setIsProcessingOrder,
 }) => {
@@ -175,6 +196,18 @@ export const submitDeliveryOrder = async ({
     return;
   }
 
+  if (!customerName?.trim()) {
+    toast.error("Please enter customer name.");
+    setShowCart(false);
+    return;
+  }
+
+  if (!scheduledDate || !scheduledTime) {
+    toast.error("Please choose order date and time.");
+    setShowCart(false);
+    return;
+  }
+
   if (cart.length === 0) {
     toast.error("Your cart is empty!");
     return;
@@ -188,14 +221,25 @@ export const submitDeliveryOrder = async ({
   setIsProcessingOrder(true);
 
   try {
+    const deliveryFee = orderType === "delivery" ? 5 : 0;
+    const taxAmount = Number(cartTotal) * 0.095;
+    const baseTotal = Number(cartTotal) + deliveryFee + taxAmount;
+    const calculatedTips = (baseTotal * Number(tipPercentage || 0)) / 100;
+
     const orderData = {
       restaurant_id: menus[0]?.restaurant_id || 1,
       address: orderType === "delivery" ? location.address : "Pickup",
       latitude: orderType === "delivery" ? validated.customerLat : null,
       longitude: orderType === "delivery" ? validated.customerLng : null,
       phone: normalizeUSPhone(phone),
+      customer_name: customerName.trim(),
+      tip_percentage: Number(tipPercentage || 0),
+      tips: Number(calculatedTips || 0).toFixed(2),
+      scheduled_date: scheduledDate,
+      scheduled_time: scheduledTime,
+      scheduled_for: `${scheduledDate} ${scheduledTime}:00`,
       items: formatOrderItems(cart),
-      total_price: cartTotal.toFixed(2),
+      total_price: (Number(cartTotal) + Number(calculatedTips || 0)).toFixed(2),
       payment_token: token,
       order_type: orderType,
     };
@@ -206,6 +250,10 @@ export const submitDeliveryOrder = async ({
     setCart([]);
     setSelectedItem(null);
     setSelectedOptions({});
+    setCustomerName("");
+    setTipPercentage(0);
+    setScheduledDate("");
+    setScheduledTime("");
     setShowPaymentModal(false);
     setPaymentToken(null);
     toast.success("Order created successfully! 🎉");

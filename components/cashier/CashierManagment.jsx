@@ -230,19 +230,30 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
       </audio>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {orders?.map((order) => (
-          <div
-            key={order.id}
-            className={`rounded-xl shadow-lg justify-center p-4 border transition-all duration-300 ${
-              order.status === "ready"
-                ? "bg-green-900/50 border-green-600 ring-2 ring-green-500"
-                : order.status === "delivered"
-                  ? "bg-blue-900/50 border-blue-600"
-                  : order.status === "cancelled"
-                    ? "bg-red-800 border-red-700"
-                    : "bg-gray-800 border-gray-700"
-            }`}
-          >
+        {orders?.map((order) => {
+          const customerName =
+            order.customer_name || order.customerName || order.name || "N/A";
+          const scheduledFor =
+            order.scheduled_for ||
+            [order.scheduled_date, order.scheduled_time].filter(Boolean).join(" ") ||
+            "N/A";
+          const tipPercentage =
+            order.tip_percentage ?? order.tipPercentage ?? order.tip_percent;
+          const tipAmount = order.tips ?? order.tip_amount ?? order.tipAmount;
+
+          return (
+            <div
+              key={order.id}
+              className={`rounded-xl shadow-lg justify-center p-4 border transition-all duration-300 ${
+                order.status === "ready"
+                  ? "bg-green-900/50 border-green-600 ring-2 ring-green-500"
+                  : order.status === "delivered"
+                    ? "bg-blue-900/50 border-blue-600"
+                    : order.status === "cancelled"
+                      ? "bg-red-800 border-red-700"
+                      : "bg-gray-800 border-gray-700"
+              }`}
+            >
             <div className="flex justify-between items-start mb-3">
               <h2 className="text-xl font-extrabold text-yellow-300">
                 Order #{order.id}
@@ -290,6 +301,17 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                   : order.address
                     ? `Delivery: ${order.address}`
                     : "N/A"}
+              </p>
+              <p>
+                <strong>Customer:</strong> {customerName}
+              </p>
+              <p>
+                <strong>Receive At:</strong> {scheduledFor}
+              </p>
+              <p>
+                <strong>Tips:</strong>{" "}
+                {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
+                {tipAmount != null ? ` (${tipAmount}$)` : ""}
               </p>
               <p>
                 {order.order_type === "pickup"
@@ -407,8 +429,9 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                 </button>
               )}
             </div>
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {/* ✅ هذا الجزء يظهر عندما تكون المصفوفة فارغة */}
         {orders.length === 0 && (
           <div className="md:col-span-3 text-center text-gray-500 py-12">

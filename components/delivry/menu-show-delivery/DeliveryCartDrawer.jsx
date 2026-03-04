@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,18 +8,44 @@ const DeliveryCartDrawer = ({
   showCart,
   cart,
   phone,
+  customerName,
+  tipPercentage,
+  scheduledDate,
+  scheduledTime,
   orderType,
   cartTotal,
   setPhone,
+  setCustomerName,
+  setTipPercentage,
+  setScheduledDate,
+  setScheduledTime,
   setOrderType,
   updateQty,
   removeFromCart,
   onClose,
   onProceed,
 }) => {
+  const [showCheckoutScreen, setShowCheckoutScreen] = useState(false);
+  const baseTotal =
+    cartTotal + (orderType === "delivery" ? 5 : 0) + cartTotal * 0.095;
+  const safeTipPercentage = Number(tipPercentage || 0);
+  const safeTips = (baseTotal * safeTipPercentage) / 100;
   const deliveryFee = orderType === "delivery" ? 5 : 0;
   const taxAmount = cartTotal * 0.095;
-  const finalTotal = cartTotal + deliveryFee + taxAmount;
+  const finalTotal = cartTotal + deliveryFee + taxAmount + safeTips;
+  const tipOptions = [0, 5, 10, 15, 20];
+
+  const handleCloseDrawer = () => {
+    setShowCheckoutScreen(false);
+    onClose();
+  };
+
+  const handleProceedPayment = () => {
+    const canOpenPayment = onProceed?.();
+    if (canOpenPayment) {
+      setShowCheckoutScreen(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -36,7 +63,7 @@ const DeliveryCartDrawer = ({
               </h3>
               <Button
                 variant="ghost"
-                onClick={onClose}
+                onClick={handleCloseDrawer}
                 className="rounded-full bg-slate-100"
               >
                 <X />
@@ -112,84 +139,210 @@ const DeliveryCartDrawer = ({
 
             {cart.length > 0 && (
               <div className="mt-6 space-y-4 bg-slate-50 p-5 rounded-2xl">
-                <div className="space-y-2">
-                  <span className="text-sm text-slate-600 font-semibold">
-                    Order Type:
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label
-                      className={`flex items-center justify-center gap-2 py-2 rounded-lg border cursor-pointer transition-all ${
-                        orderType === "pickup"
-                          ? "border-orange-500 bg-orange-50 text-orange-600"
-                          : "border-slate-200 bg-white text-slate-600"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="orderType"
-                        value="pickup"
-                        checked={orderType === "pickup"}
-                        onChange={() => setOrderType("pickup")}
-                        className="accent-orange-500"
-                      />
-                      Pickup
-                    </label>
-
-                    <label
-                      className={`flex items-center justify-center gap-2 py-2 rounded-lg border cursor-pointer transition-all ${
-                        orderType === "delivery"
-                          ? "border-orange-500 bg-orange-50 text-orange-600"
-                          : "border-slate-200 bg-white text-slate-600"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="orderType"
-                        value="delivery"
-                        checked={orderType === "delivery"}
-                        onChange={() => setOrderType("delivery")}
-                        className="accent-orange-500"
-                      />
-                      Delivery
-                    </label>
+                <div className="space-y-1 text-sm text-slate-700 font-semibold">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${cartTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Delivery:</span>
+                    <span>${deliveryFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>TAX:</span>
+                    <span>${taxAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tip:</span>
+                    <span>${safeTips.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between text-sm text-slate-600 items-center">
-                  <span>Phone:</span>
-                  <input
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    className="w-32 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                  />
-                </div>
-
-                <div className="flex justify-between text-lg font-black text-slate-900">
+                <div className="flex justify-between text-lg font-black text-slate-900 border-t border-slate-200 pt-3">
                   <span>Total:</span>
                   <span className="text-orange-600">
                     ${finalTotal.toFixed(2)}
-                  </span>
-                  <span>Delivery:</span>
-                  <span className="text-orange-600">
-                    {deliveryFee.toFixed(2)}
-                  </span>
-                  <span>TAX:</span>
-                  <span className="text-orange-600">
-                    {taxAmount.toFixed(2)}
                   </span>
                 </div>
 
                 <Button
                   className="w-full py-6 rounded-full bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-200 transition-all"
-                  onClick={onProceed}
+                  onClick={() => setShowCheckoutScreen(true)}
                 >
-                  Proceed to Checkout
+                  Checkout Details
                 </Button>
               </div>
             )}
           </motion.div>
+
+          <AnimatePresence>
+            {showCheckoutScreen && cart.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[90] bg-black/55 backdrop-blur-sm flex items-center justify-center p-4"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 30, scale: 0.96 }}
+                  className="w-full max-w-xl rounded-2xl bg-white shadow-2xl p-6"
+                >
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-xl font-black text-slate-900">
+                      Checkout
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowCheckoutScreen(false)}
+                      className="rounded-full bg-slate-100"
+                    >
+                      <X />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <span className="text-sm text-slate-600 font-semibold">
+                        Order Type:
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label
+                          className={`flex items-center justify-center gap-2 py-2 rounded-lg border cursor-pointer transition-all ${
+                            orderType === "pickup"
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-200 bg-white text-slate-600"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="orderType"
+                            value="pickup"
+                            checked={orderType === "pickup"}
+                            onChange={() => setOrderType("pickup")}
+                            className="accent-orange-500"
+                          />
+                          Pickup
+                        </label>
+
+                        <label
+                          className={`flex items-center justify-center gap-2 py-2 rounded-lg border cursor-pointer transition-all ${
+                            orderType === "delivery"
+                              ? "border-orange-500 bg-orange-50 text-orange-600"
+                              : "border-slate-200 bg-white text-slate-600"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="orderType"
+                            value="delivery"
+                            checked={orderType === "delivery"}
+                            onChange={() => setOrderType("delivery")}
+                            className="accent-orange-500"
+                          />
+                          Delivery
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <span className="text-sm text-slate-600">Phone:</span>
+                        <input
+                          type="tel"
+                          placeholder="Enter your phone number"
+                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          value={phone}
+                          onChange={(event) => setPhone(event.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-sm text-slate-600">Name:</span>
+                        <input
+                          type="text"
+                          placeholder="Customer name"
+                          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          value={customerName}
+                          onChange={(event) =>
+                            setCustomerName(event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-sm text-slate-600">
+                        Receive On:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          min={new Date().toISOString().split("T")[0]}
+                          className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          value={scheduledDate}
+                          onChange={(event) =>
+                            setScheduledDate(event.target.value)
+                          }
+                        />
+                        <input
+                          type="time"
+                          className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          value={scheduledTime}
+                          onChange={(event) =>
+                            setScheduledTime(event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-sm text-slate-600">Tips:</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {tipOptions.map((value) => (
+                          <span
+                            key={value}
+                            type="button"
+                            onClick={() => setTipPercentage(value)}
+                            className={`px-3 py-1.5 text-sm rounded-md border transition-all ${
+                              safeTipPercentage === value
+                                ? "border-orange-500 bg-orange-50 text-orange-700 font-bold"
+                                : "border-slate-200 bg-white text-slate-600"
+                            }`}
+                          >
+                            {value}%
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+                      <div className="flex justify-between text-sm text-slate-700">
+                        <span>Tip Amount:</span>
+                        <span className="font-semibold text-orange-600">
+                          ${safeTips.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-lg font-black text-slate-900 pt-1 border-t border-slate-200">
+                        <span>Final Total:</span>
+                        <span className="text-orange-600">
+                          ${finalTotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full py-6 rounded-full bg-orange-600 hover:bg-orange-700 text-white font-black text-lg shadow-xl shadow-orange-200 transition-all"
+                      onClick={handleProceedPayment}
+                    >
+                      Proceed to Payment
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </AnimatePresence>

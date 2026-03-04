@@ -240,11 +240,22 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
       </audio>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {orders?.map((order) => (
-          <div
-            key={order.id}
-            className="bg-gray-900 rounded-xl shadow-md p-4 border border-gray-700 hover:shadow-yellow-400/20 transition-all duration-300"
-          >
+        {orders?.map((order) => {
+          const customerName =
+            order.customer_name || order.customerName || order.name || "N/A";
+          const scheduledFor =
+            order.scheduled_for ||
+            [order.scheduled_date, order.scheduled_time].filter(Boolean).join(" ") ||
+            "N/A";
+          const tipPercentage =
+            order.tip_percentage ?? order.tipPercentage ?? order.tip_percent;
+          const tipAmount = order.tips ?? order.tip_amount ?? order.tipAmount;
+
+          return (
+            <div
+              key={order.id}
+              className="bg-gray-900 rounded-xl shadow-md p-4 border border-gray-700 hover:shadow-yellow-400/20 transition-all duration-300"
+            >
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-bold">Order #{order.id}</h2>
               <span
@@ -275,6 +286,17 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
                   : order.address
                   ? `Delivery: ${order.address}`
                   : "N/A"}
+              </p>
+              <p>
+                <strong>Customer:</strong> {customerName}
+              </p>
+              <p>
+                <strong>Receive At:</strong> {scheduledFor}
+              </p>
+              <p>
+                <strong>Tips:</strong>{" "}
+                {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
+                {tipAmount != null ? ` (${tipAmount}$)` : ""}
               </p>
               <p>
                 <strong>Total:</strong> {order.total_price} $
@@ -367,8 +389,9 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
                 </button>
               )}
             </div>
-          </div>
-        ))}
+            </div>
+          );
+        })}
 
         {orders.length === 0 && (
           <div className="md:col-span-3 text-center text-gray-500 py-10">

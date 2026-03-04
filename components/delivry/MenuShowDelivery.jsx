@@ -22,6 +22,10 @@ const MenuShowDelivery = () => {
     location,
     menus,
     phone,
+    customerName,
+    tipPercentage,
+    scheduledDate,
+    scheduledTime,
     orderType,
     selectedItem,
     selectedMenu,
@@ -40,6 +44,10 @@ const MenuShowDelivery = () => {
     setLocation,
     setPaymentToken,
     setPhone,
+    setCustomerName,
+    setTipPercentage,
+    setScheduledDate,
+    setScheduledTime,
     setOrderType,
     setSelectedItem,
     setSelectedMenu,
@@ -103,16 +111,25 @@ const MenuShowDelivery = () => {
         showCart={showCart}
         cart={cart}
         phone={phone}
+        customerName={customerName}
+        tipPercentage={tipPercentage}
+        scheduledDate={scheduledDate}
+        scheduledTime={scheduledTime}
         orderType={orderType}
         cartTotal={cartTotal}
         setPhone={setPhone}
+        setCustomerName={setCustomerName}
+        setTipPercentage={setTipPercentage}
+        setScheduledDate={setScheduledDate}
+        setScheduledTime={setScheduledTime}
         setOrderType={setOrderType}
         updateQty={updateQty}
         removeFromCart={removeFromCart}
         onClose={() => setShowCart(false)}
         onProceed={() => {
-          if (!canProceedToPayment()) return;
+          if (!canProceedToPayment()) return false;
           setShowPaymentModal(true);
+          return true;
         }}
       />
 
