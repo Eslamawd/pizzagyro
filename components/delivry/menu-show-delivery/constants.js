@@ -11,6 +11,10 @@ export const OPTION_GROUP_CONFIG = {
 
 export const DELIVERY_RADIUS_MILES = 5;
 
+// 0=Sunday, 1=Monday, ... 6=Saturday
+// Keep empty for now. Add days later if needed, e.g. [1] for Monday.
+export const CLOSED_WEEK_DAYS = [];
+
 export const MANUAL_RESTAURANT_LOCATION = {
   lat: 36.01244975,
   lng: -86.5487051,

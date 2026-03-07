@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import DeliveryCartOptions from "./DeliveryCartOptions";
+import { CLOSED_WEEK_DAYS } from "./constants";
 
 const DeliveryCartDrawer = ({
   showCart,
   cart,
+  location,
   phone,
   customerName,
   tipPercentage,
@@ -14,6 +17,7 @@ const DeliveryCartDrawer = ({
   scheduledTime,
   orderType,
   cartTotal,
+  setLocation,
   setPhone,
   setCustomerName,
   setTipPercentage,
@@ -26,6 +30,7 @@ const DeliveryCartDrawer = ({
   onProceed,
 }) => {
   const [showCheckoutScreen, setShowCheckoutScreen] = useState(false);
+  const [isResolvingGpsAddress, setIsResolvingGpsAddress] = useState(false);
   const baseTotal =
     cartTotal + (orderType === "delivery" ? 5 : 0) + cartTotal * 0.095;
   const safeTipPercentage = Number(tipPercentage || 0);
@@ -34,6 +39,29 @@ const DeliveryCartDrawer = ({
   const taxAmount = cartTotal * 0.095;
   const finalTotal = cartTotal + deliveryFee + taxAmount + safeTips;
   const tipOptions = [0, 5, 10, 15, 20];
+
+  const isClosedWeekDay = (dateValue) => {
+    if (!dateValue) return false;
+    const date = new Date(`${dateValue}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return false;
+    return CLOSED_WEEK_DAYS.includes(date.getDay());
+  };
+
+  const getBusinessHoursForDate = (dateValue) => {
+    if (!dateValue) {
+      return { minTime: "10:00", maxTime: "22:00", label: "10:00 - 22:00" };
+    }
+
+    const selectedDate = new Date(`${dateValue}T00:00:00`);
+    const day = selectedDate.getDay();
+    const isWeekendWindow = day === 5 || day === 6; // Friday, Saturday
+
+    return isWeekendWindow
+      ? { minTime: "10:00", maxTime: "23:30", label: "10:00 - 23:30" }
+      : { minTime: "10:00", maxTime: "22:00", label: "10:00 - 22:00" };
+  };
+
+  const selectedDayBusinessHours = getBusinessHoursForDate(scheduledDate);
 
   const handleCloseDrawer = () => {
     setShowCheckoutScreen(false);
@@ -44,6 +72,69 @@ const DeliveryCartDrawer = ({
     const canOpenPayment = onProceed?.();
     if (canOpenPayment) {
       setShowCheckoutScreen(false);
+    }
+  };
+
+  const handleDateChange = (event) => {
+    const nextDate = event.target.value;
+
+    if (isClosedWeekDay(nextDate)) {
+      toast.error("Selected day is closed. Please choose another date.");
+      setScheduledDate("");
+      setScheduledTime("");
+      return;
+    }
+
+    setScheduledDate(nextDate);
+  };
+
+  const handleAddressChange = (event) => {
+    const nextAddress = event.target.value;
+    setLocation((prev) => ({
+      ...prev,
+      address: nextAddress,
+      isSet: true,
+    }));
+  };
+
+  const handleUseGpsAddress = async () => {
+    const lat = location?.lat;
+    const lng = location?.lng;
+
+    if (lat == null || lng == null) {
+      toast.error("GPS location is not available yet.");
+      return;
+    }
+
+    setIsResolvingGpsAddress(true);
+    try {
+      const response = await fetch(
+        `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
+      );
+      if (!response.ok) throw new Error("Failed to resolve GPS address");
+
+      const data = await response.json();
+      const addressData = data.address || {};
+      const resolvedAddress =
+        addressData.neighbourhood ||
+        addressData.suburb ||
+        addressData.city_district ||
+        addressData.town ||
+        addressData.city ||
+        data.display_name ||
+        "Your location";
+
+      setLocation((prev) => ({
+        ...prev,
+        address: resolvedAddress,
+        isSet: true,
+      }));
+      toast.success("Address updated from GPS.");
+    } catch (error) {
+      console.error("Failed to resolve GPS address:", error);
+      toast.error("Could not fetch GPS address right now.");
+    } finally {
+      setIsResolvingGpsAddress(false);
     }
   };
 
@@ -272,22 +363,60 @@ const DeliveryCartDrawer = ({
                       </div>
                     </div>
 
+                    {orderType === "delivery" && (
+                      <div className="space-y-1">
+                        <span className="text-sm text-slate-600">Address:</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Enter delivery address manually"
+                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            value={location?.address || ""}
+                            onChange={handleAddressChange}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleUseGpsAddress}
+                            disabled={isResolvingGpsAddress}
+                            className="h-10 px-3 text-xs whitespace-nowrap"
+                          >
+                            {isResolvingGpsAddress ? "Loading..." : "Use GPS"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          You can type address manually. GPS location stays enabled.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-1">
                       <span className="text-sm text-slate-600">
                         Receive On:
                       </span>
+                      <p className="text-xs text-slate-500">
+                        Sunday - Thursday: 10 AM - 10 PM
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Friday - Saturday: 10 AM - 11:30 PM
+                      </p>
+                      {CLOSED_WEEK_DAYS.length > 0 && (
+                        <p className="text-xs text-red-500">
+                          Some weekdays are closed and cannot be selected.
+                        </p>
+                      )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <input
                           type="date"
                           min={new Date().toISOString().split("T")[0]}
                           className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           value={scheduledDate}
-                          onChange={(event) =>
-                            setScheduledDate(event.target.value)
-                          }
+                          onChange={handleDateChange}
                         />
                         <input
                           type="time"
+                          min={selectedDayBusinessHours.minTime}
+                          max={selectedDayBusinessHours.maxTime}
                           className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           value={scheduledTime}
                           onChange={(event) =>
@@ -295,6 +424,9 @@ const DeliveryCartDrawer = ({
                           }
                         />
                       </div>
+                      <p className="text-xs text-orange-600">
+                        Available today: {selectedDayBusinessHours.label}
+                      </p>
                     </div>
 
                     <div className="space-y-2">

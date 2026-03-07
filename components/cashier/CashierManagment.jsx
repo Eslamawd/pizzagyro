@@ -235,7 +235,9 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
             order.customer_name || order.customerName || order.name || "N/A";
           const scheduledFor =
             order.scheduled_for ||
-            [order.scheduled_date, order.scheduled_time].filter(Boolean).join(" ") ||
+            [order.scheduled_date, order.scheduled_time]
+              .filter(Boolean)
+              .join(" ") ||
             "N/A";
           const tipPercentage =
             order.tip_percentage ?? order.tipPercentage ?? order.tip_percent;
@@ -254,181 +256,181 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                       : "bg-gray-800 border-gray-700"
               }`}
             >
-            <div className="flex justify-between items-start mb-3">
-              <h2 className="text-xl font-extrabold text-yellow-300">
-                Order #{order.id}
-              </h2>
-              {order?.phone && (
-                <a
-                  href={`tel:${order.phone}`}
-                  className="text-lg underline hover:text-orange-500"
-                >
-                  📞 Phone: {order.phone}
-                </a>
-              )}
-
-              <span
-                className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                  order.status === "pending" || order.status === "cancelled"
-                    ? "bg-red-500"
-                    : order.status === "in_progress"
-                      ? "bg-yellow-500"
-                      : order.status === "ready"
-                        ? "bg-green-500"
-                        : order.status === "delivered"
-                          ? "bg-blue-500"
-                          : "bg-gray-500"
-                }`}
-              >
-                {order.status === "pending"
-                  ? "Pending"
-                  : order.status === "in_progress"
-                    ? "In Progress"
-                    : order.status === "ready"
-                      ? "Ready for Payment"
-                      : order.status === "delivered"
-                        ? "Delivered"
-                        : order.status === "cancelled"
-                          ? "Cancelled"
-                          : "Paid"}
-              </span>
-            </div>
-
-            <div className="mb-4 text-sm text-gray-300 border-b border-gray-700 pb-2">
-              <p>
-                {order.table?.name
-                  ? `Table: ${order.table?.name}`
-                  : order.address
-                    ? `Delivery: ${order.address}`
-                    : "N/A"}
-              </p>
-              <p>
-                <strong>Customer:</strong> {customerName}
-              </p>
-              <p>
-                <strong>Receive At:</strong> {scheduledFor}
-              </p>
-              <p>
-                <strong>Tips:</strong>{" "}
-                {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
-                {tipAmount != null ? ` (${tipAmount}$)` : ""}
-              </p>
-              <p>
-                {order.order_type === "pickup"
-                  ? "Pickup"
-                  : order.order_type === "delivery"
-                    ? "Delivery"
-                    : "N/A"}
-              </p>
-              <p className="text-lg font-bold text-white">
-                <strong>Total:</strong> {order.total_price} $
-              </p>
-            </div>
-
-            <div className="mb-4 max-h-48 overflow-y-auto custom-scrollbar">
-              <p className="text-sm font-semibold text-yellow-400 mb-2">
-                Items List:
-              </p>
-              <ul className="space-y-3">
-                {order?.order_items?.map((item, i) => (
-                  <li
-                    key={i}
-                    className="bg-gray-700 p-3 rounded-lg flex gap-3 items-start"
+              <div className="flex justify-between items-start mb-3">
+                <h2 className="text-xl font-extrabold text-yellow-300">
+                  Order #{order.id}
+                </h2>
+                {order?.phone && (
+                  <a
+                    href={`tel:${order.phone}`}
+                    className="text-lg underline hover:text-orange-500"
                   >
-                    {/* استخدام Placeholder Image إذا لم تتوفر صورة */}
-                    <img
-                      src={
-                        item.item?.image ||
-                        `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
-                          0,
-                          1,
-                        )}`
-                      }
-                      alt={item.item?.name}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
-                          0,
-                          1,
-                        )}`;
-                      }}
-                      className="w-16 h-16 object-cover rounded-md flex-shrink-0"
-                    />
-                    <div className="flex-grow">
-                      <p className="font-medium text-lg text-white">
-                        {item.item?.name} (x{item.quantity})
-                      </p>
-                      {item.options?.length > 0 && (
-                        <div className="text-xs mt-1">
-                          <p className="text-yellow-400 font-semibold mb-1">
-                            Options:
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {item.options.map((opt, idx) => (
-                              <div
-                                key={opt.id}
-                                className="flex w-full items-center"
-                              >
-                                {opt.pivot?.position === "right" && (
-                                  <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                    RIGHT
-                                  </span>
-                                )}
-                                {opt.pivot?.position === "left" && (
-                                  <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                    LEFT
-                                  </span>
-                                )}
-                                {opt.pivot?.position === "whole" && (
-                                  <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                    ALL
-                                  </span>
-                                )}
-                                <p className="text-white/80">
-                                  <strong className="text-lg text-orange-400">
-                                    {" "}
-                                    {opt.option_type}{" "}
-                                  </strong>
-                                  : {opt.name}{" "}
-                                  {opt.price ? `(+${opt.price}$)` : ""}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {item.comment && (
-                        <p className="text-xs text-red-300 mt-1 italic">
-                          Note: {item.comment}
+                    📞 Phone: {order.phone}
+                  </a>
+                )}
+
+                <span
+                  className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                    order.status === "pending" || order.status === "cancelled"
+                      ? "bg-red-500"
+                      : order.status === "in_progress"
+                        ? "bg-yellow-500"
+                        : order.status === "ready"
+                          ? "bg-green-500"
+                          : order.status === "delivered"
+                            ? "bg-blue-500"
+                            : "bg-gray-500"
+                  }`}
+                >
+                  {order.status === "pending"
+                    ? "Pending"
+                    : order.status === "in_progress"
+                      ? "In Progress"
+                      : order.status === "ready"
+                        ? "Ready for Payment"
+                        : order.status === "delivered"
+                          ? "Delivered"
+                          : order.status === "cancelled"
+                            ? "Cancelled"
+                            : "Paid"}
+                </span>
+              </div>
+
+              <div className="mb-4 text-sm text-gray-300 border-b border-gray-700 pb-2">
+                <p>
+                  {order.table?.name
+                    ? `Table: ${order.table?.name}`
+                    : order.address
+                      ? `Delivery: ${order.address}`
+                      : "N/A"}
+                </p>
+                <p>
+                  <strong>Customer:</strong> {customerName}
+                </p>
+                <p>
+                  <strong>Receive At:</strong> {scheduledFor}
+                </p>
+                <p>
+                  <strong>Tips:</strong>{" "}
+                  {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
+                  {tipAmount != null ? ` (${tipAmount}$)` : ""}
+                </p>
+                <p>
+                  {order.order_type === "pickup"
+                    ? "Pickup"
+                    : order.order_type === "delivery"
+                      ? "Delivery"
+                      : "N/A"}
+                </p>
+                <p className="text-lg font-bold text-white">
+                  <strong>Total:</strong> {order.total_price} $
+                </p>
+              </div>
+
+              <div className="mb-4 max-h-48 overflow-y-auto custom-scrollbar">
+                <p className="text-sm font-semibold text-yellow-400 mb-2">
+                  Items List:
+                </p>
+                <ul className="space-y-3">
+                  {order?.order_items?.map((item, i) => (
+                    <li
+                      key={i}
+                      className="bg-gray-700 p-3 rounded-lg flex gap-3 items-start"
+                    >
+                      {/* استخدام Placeholder Image إذا لم تتوفر صورة */}
+                      <img
+                        src={
+                          item.item?.image ||
+                          `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
+                            0,
+                            1,
+                          )}`
+                        }
+                        alt={item.item?.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://placehold.co/80x80/2d3748/ffffff?text=${item.item?.name?.substring(
+                            0,
+                            1,
+                          )}`;
+                        }}
+                        className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                      />
+                      <div className="flex-grow">
+                        <p className="font-medium text-lg text-white">
+                          {item.item?.name} (x{item.quantity})
                         </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                        {item.options?.length > 0 && (
+                          <div className="text-xs mt-1">
+                            <p className="text-yellow-400 font-semibold mb-1">
+                              Options:
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {item.options.map((opt, idx) => (
+                                <div
+                                  key={opt.id}
+                                  className="flex w-full items-center"
+                                >
+                                  {opt.pivot?.position === "right" && (
+                                    <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      RIGHT
+                                    </span>
+                                  )}
+                                  {opt.pivot?.position === "left" && (
+                                    <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      LEFT
+                                    </span>
+                                  )}
+                                  {opt.pivot?.position === "whole" && (
+                                    <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                      ALL
+                                    </span>
+                                  )}
+                                  <p className="text-white/80">
+                                    <strong className="text-lg text-orange-400">
+                                      {" "}
+                                      {opt.option_type}{" "}
+                                    </strong>
+                                    : {opt.name}{" "}
+                                    {opt.price ? `(+${opt.price}$)` : ""}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {item.comment && (
+                          <p className="text-xs text-red-300 mt-1 italic">
+                            Note: {item.comment}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="flex gap-2 pt-2 border-t border-gray-700">
-              {/* زر تم الدفع (للحالة Ready فقط) */}
-              {["ready", "pending", "in_progress"].includes(order.status) && (
-                <button
-                  onClick={() => updateStatus(order.id, "payid")}
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-2 rounded-lg text-sm font-semibold transition-transform duration-150 transform hover:scale-[1.02] shadow-md hover:shadow-yellow-400/50"
-                >
-                  Mark as Paid
-                </button>
-              )}
+              <div className="flex gap-2 pt-2 border-t border-gray-700">
+                {/* زر تم الدفع (للحالة Ready فقط) */}
+                {["ready", "pending", "in_progress"].includes(order.status) && (
+                  <button
+                    onClick={() => updateStatus(order.id, "payid")}
+                    className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-2 rounded-lg text-sm font-semibold transition-transform duration-150 transform hover:scale-[1.02] shadow-md hover:shadow-yellow-400/50"
+                  >
+                    Mark as Paid
+                  </button>
+                )}
 
-              {/* زر الإلغاء (يمكن إضافته إذا كان مسموحًا) */}
-              {order.status !== "payid" && order.status !== "cancelled" && (
-                <button
-                  onClick={() => updateStatus(order.id, "cancelled")}
-                  className="bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
+                {/* زر الإلغاء (يمكن إضافته إذا كان مسموحًا) */}
+                {order.status !== "payid" && order.status !== "cancelled" && (
+                  <button
+                    onClick={() => updateStatus(order.id, "cancelled")}
+                    className="bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

@@ -110,6 +110,7 @@ const MenuShowDelivery = () => {
       <DeliveryCartDrawer
         showCart={showCart}
         cart={cart}
+        location={location}
         phone={phone}
         customerName={customerName}
         tipPercentage={tipPercentage}
@@ -117,6 +118,7 @@ const MenuShowDelivery = () => {
         scheduledTime={scheduledTime}
         orderType={orderType}
         cartTotal={cartTotal}
+        setLocation={setLocation}
         setPhone={setPhone}
         setCustomerName={setCustomerName}
         setTipPercentage={setTipPercentage}

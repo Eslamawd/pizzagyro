@@ -1,5 +1,9 @@
 import { toast } from "sonner";
-import { DELIVERY_RADIUS_MILES, MANUAL_RESTAURANT_LOCATION } from "./constants";
+import {
+  CLOSED_WEEK_DAYS,
+  DELIVERY_RADIUS_MILES,
+  MANUAL_RESTAURANT_LOCATION,
+} from "./constants";
 import {
   calculateDistance,
   formatOrderItems,
@@ -34,6 +38,35 @@ const getValidatedLocation = ({ location, setShowCart, setShowLocModal }) => {
   }
 
   return { customerLat, customerLng, restaurantCoordinates };
+};
+
+const isWithinBusinessHours = (scheduledDate, scheduledTime) => {
+  if (!scheduledDate || !scheduledTime) return false;
+
+  const date = new Date(`${scheduledDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const [hourString, minuteString] = scheduledTime.split(":");
+  const hour = Number(hourString);
+  const minute = Number(minuteString);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return false;
+
+  const totalMinutes = hour * 60 + minute;
+  const openMinutes = 10 * 60; // 10:00
+  const isFridayOrSaturday = date.getDay() === 5 || date.getDay() === 6;
+  const closeMinutes = isFridayOrSaturday ? 23 * 60 + 30 : 22 * 60;
+
+  return totalMinutes >= openMinutes && totalMinutes <= closeMinutes;
+};
+
+const BUSINESS_HOURS_TEXT =
+  "Sunday - Thursday: 10 AM - 10 PM, Friday - Saturday: 10 AM - 11:30 PM";
+
+const isClosedWeekDay = (scheduledDate) => {
+  if (!scheduledDate) return false;
+  const date = new Date(`${scheduledDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  return CLOSED_WEEK_DAYS.includes(date.getDay());
 };
 
 export const canProceedDeliveryPayment = ({
@@ -109,6 +142,18 @@ export const canProceedDeliveryPayment = ({
 
   if (!scheduledDate || !scheduledTime) {
     toast.error("Please choose order date and time.");
+    return false;
+  }
+
+  if (isClosedWeekDay(scheduledDate)) {
+    toast.error("Selected day is closed. Please choose another date.");
+    return false;
+  }
+
+  if (!isWithinBusinessHours(scheduledDate, scheduledTime)) {
+    toast.error(
+      `Selected time is outside business hours. ${BUSINESS_HOURS_TEXT}`,
+    );
     return false;
   }
 
@@ -204,6 +249,20 @@ export const submitDeliveryOrder = async ({
 
   if (!scheduledDate || !scheduledTime) {
     toast.error("Please choose order date and time.");
+    setShowCart(false);
+    return;
+  }
+
+  if (isClosedWeekDay(scheduledDate)) {
+    toast.error("Selected day is closed. Please choose another date.");
+    setShowCart(false);
+    return;
+  }
+
+  if (!isWithinBusinessHours(scheduledDate, scheduledTime)) {
+    toast.error(
+      `Selected time is outside business hours. ${BUSINESS_HOURS_TEXT}`,
+    );
     setShowCart(false);
     return;
   }

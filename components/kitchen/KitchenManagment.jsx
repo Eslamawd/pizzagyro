@@ -43,7 +43,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
         kitchen,
         restaurant_id,
         user_id,
-        token
+        token,
       );
 
       if (data?.active === false) {
@@ -54,7 +54,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
       const sorted = data.sort(
         (a, b) =>
           new Date(b.created_at ?? 0).getTime() -
-          new Date(a.created_at ?? 0).getTime()
+          new Date(a.created_at ?? 0).getTime(),
       );
       setOrders(sorted);
     } catch (error) {
@@ -72,13 +72,13 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
         restaurant_id,
         user_id,
         token,
-        { status }
+        { status },
       );
 
       // ✅ تحديث فوري محلي
       setOrders((prev) => {
         const updated = prev.map((order) =>
-          order.id === orderId ? { ...order, status } : order
+          order.id === orderId ? { ...order, status } : order,
         );
         // حذف الطلب من القائمة بعد التجهيز
         return status === "ready"
@@ -105,7 +105,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
           .then(() => {
             // التشغيل نجح
             console.log(
-              `🔔 The notification sound was enabled on attempt number${attempt}.`
+              `🔔 The notification sound was enabled on attempt number${attempt}.`,
             );
           })
           .catch((err) => {
@@ -167,7 +167,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
         onOrderUpdated(({ order_id, status }) => {
           setOrders((prev) => {
             const updated = prev.map((o) =>
-              o.id === order_id ? { ...o, status } : o
+              o.id === order_id ? { ...o, status } : o,
             );
             return updated.sort((a, b) => b.id - a.id);
           });
@@ -245,7 +245,9 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
             order.customer_name || order.customerName || order.name || "N/A";
           const scheduledFor =
             order.scheduled_for ||
-            [order.scheduled_date, order.scheduled_time].filter(Boolean).join(" ") ||
+            [order.scheduled_date, order.scheduled_time]
+              .filter(Boolean)
+              .join(" ") ||
             "N/A";
           const tipPercentage =
             order.tip_percentage ?? order.tipPercentage ?? order.tip_percent;
@@ -256,139 +258,139 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
               key={order.id}
               className="bg-gray-900 rounded-xl shadow-md p-4 border border-gray-700 hover:shadow-yellow-400/20 transition-all duration-300"
             >
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-bold">Order #{order.id}</h2>
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded ${
-                  order.status === "pending"
-                    ? "bg-red-500"
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-bold">Order #{order.id}</h2>
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded ${
+                    order.status === "pending"
+                      ? "bg-red-500"
+                      : order.status === "in_progress"
+                        ? "bg-yellow-500 text-black"
+                        : order.status === "cancelled"
+                          ? "bg-gray-600"
+                          : "bg-green-500 text-black"
+                  }`}
+                >
+                  {order.status === "pending"
+                    ? "Pending"
                     : order.status === "in_progress"
-                    ? "bg-yellow-500 text-black"
-                    : order.status === "cancelled"
-                    ? "bg-gray-600"
-                    : "bg-green-500 text-black"
-                }`}
-              >
-                {order.status === "pending"
-                  ? "Pending"
-                  : order.status === "in_progress"
-                  ? "In Progress"
-                  : order.status === "cancelled"
-                  ? "Cancelled"
-                  : "Ready"}
-              </span>
-            </div>
+                      ? "In Progress"
+                      : order.status === "cancelled"
+                        ? "Cancelled"
+                        : "Ready"}
+                </span>
+              </div>
 
-            <div className="mb-2 text-sm text-gray-300">
-              <p>
-                {order.table?.name
-                  ? `Table: ${order.table?.name}`
-                  : order.address
-                  ? `Delivery: ${order.address}`
-                  : "N/A"}
-              </p>
-              <p>
-                <strong>Customer:</strong> {customerName}
-              </p>
-              <p>
-                <strong>Receive At:</strong> {scheduledFor}
-              </p>
-              <p>
-                <strong>Tips:</strong>{" "}
-                {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
-                {tipAmount != null ? ` (${tipAmount}$)` : ""}
-              </p>
-              <p>
-                <strong>Total:</strong> {order.total_price} $
-              </p>
-              <p className="text-sm font-semibold text-yellow-400 mb-2">
-                Items List:
-              </p>
-            </div>
+              <div className="mb-2 text-sm text-gray-300">
+                <p>
+                  {order.table?.name
+                    ? `Table: ${order.table?.name}`
+                    : order.address
+                      ? `Delivery: ${order.address}`
+                      : "N/A"}
+                </p>
+                <p>
+                  <strong>Customer:</strong> {customerName}
+                </p>
+                <p>
+                  <strong>Receive At:</strong> {scheduledFor}
+                </p>
+                <p>
+                  <strong>Tips:</strong>{" "}
+                  {tipPercentage != null ? `${tipPercentage}%` : "N/A"}
+                  {tipAmount != null ? ` (${tipAmount}$)` : ""}
+                </p>
+                <p>
+                  <strong>Total:</strong> {order.total_price} $
+                </p>
+                <p className="text-sm font-semibold text-yellow-400 mb-2">
+                  Items List:
+                </p>
+              </div>
 
-            <div className="mb-4 max-h-56 overflow-y-auto custom-scrollbar">
-              {order.order_items?.map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-gray-800 p-2 rounded-lg mb-2 flex items-center gap-3"
-                >
-                  <img
-                    src={item.item?.image ?? "/placeholder.png"}
-                    alt={item.item?.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                  <div>
-                    <p className="font-medium">{item.item?.name}</p>
-                    <p className="text-l text-orange-400">
-                      Quantity: {item.quantity}
-                    </p>
-                    {item.comment && (
-                      <p className="text-xs text-yellow-400 italic">
-                        Note: {item.comment}
+              <div className="mb-4 max-h-56 overflow-y-auto custom-scrollbar">
+                {order.order_items?.map((item, i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-800 p-2 rounded-lg mb-2 flex items-center gap-3"
+                  >
+                    <img
+                      src={item.item?.image ?? "/placeholder.png"}
+                      alt={item.item?.name}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <div>
+                      <p className="font-medium">{item.item?.name}</p>
+                      <p className="text-l text-orange-400">
+                        Quantity: {item.quantity}
                       </p>
-                    )}
-                    {item.options?.length > 0 && (
-                      <div className="text-xs mt-1">
-                        <p className="text-yellow-400 font-semibold mb-1">
-                          Options:
+                      {item.comment && (
+                        <p className="text-xs text-yellow-400 italic">
+                          Note: {item.comment}
                         </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {item.options.map((opt, idx) => (
-                            <div
-                              key={opt.id}
-                              className="flex w-full items-center"
-                            >
-                              {opt.pivot?.position === "right" && (
-                                <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                  RIGHT
-                                </span>
-                              )}
-                              {opt.pivot?.position === "left" && (
-                                <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                  LEFT
-                                </span>
-                              )}
-                              {opt.pivot?.position === "whole" && (
-                                <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
-                                  ALL
-                                </span>
-                              )}
-                              <p className="text-white/80">
-                                <strong className="text-lg text-orange-400">
-                                  {" "}
-                                  {opt.option_type}{" "}
-                                </strong>
-                                : {opt.name}{" "}
-                                {opt.price ? `(+${opt.price}$)` : ""}
-                              </p>
-                            </div>
-                          ))}
+                      )}
+                      {item.options?.length > 0 && (
+                        <div className="text-xs mt-1">
+                          <p className="text-yellow-400 font-semibold mb-1">
+                            Options:
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.options.map((opt, idx) => (
+                              <div
+                                key={opt.id}
+                                className="flex w-full items-center"
+                              >
+                                {opt.pivot?.position === "right" && (
+                                  <span className="flex items-center justify-center bg-orange-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                    RIGHT
+                                  </span>
+                                )}
+                                {opt.pivot?.position === "left" && (
+                                  <span className="flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                    LEFT
+                                  </span>
+                                )}
+                                {opt.pivot?.position === "whole" && (
+                                  <span className="flex items-center justify-center bg-green-700 text-white text-[10px] font-bold w-10 h-5 rounded shadow-sm">
+                                    ALL
+                                  </span>
+                                )}
+                                <p className="text-white/80">
+                                  <strong className="text-lg text-orange-400">
+                                    {" "}
+                                    {opt.option_type}{" "}
+                                  </strong>
+                                  : {opt.name}{" "}
+                                  {opt.price ? `(+${opt.price}$)` : ""}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <div className="flex gap-2">
-              {order.status === "pending" && (
-                <button
-                  onClick={() => updateStatus(order.id, "in_progress")}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-2 rounded w-full"
-                >
-                  In Progress
-                </button>
-              )}
-              {order.status === "in_progress" && (
-                <button
-                  onClick={() => updateStatus(order.id, "ready")}
-                  className="bg-green-500 hover:bg-green-600 text-black px-3 py-2 rounded w-full"
-                >
-                  Ready for Delivery
-                </button>
-              )}
-            </div>
+              <div className="flex gap-2">
+                {order.status === "pending" && (
+                  <button
+                    onClick={() => updateStatus(order.id, "in_progress")}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-2 rounded w-full"
+                  >
+                    In Progress
+                  </button>
+                )}
+                {order.status === "in_progress" && (
+                  <button
+                    onClick={() => updateStatus(order.id, "ready")}
+                    className="bg-green-500 hover:bg-green-600 text-black px-3 py-2 rounded w-full"
+                  >
+                    Ready for Delivery
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
