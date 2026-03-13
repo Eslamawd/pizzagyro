@@ -12,8 +12,10 @@ import { toast } from "sonner";
 function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
   const [orders, setOrders] = useState([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [isAlertRinging, setIsAlertRinging] = useState(false);
   const socketRef = useRef(null);
   const audioRef = useRef(null);
+  const vibrationIntervalRef = useRef(null);
 
   // ✅ طلب إذن الإشعارات مرة واحدة فقط
   useEffect(() => {
@@ -29,11 +31,52 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
       await audioRef.current.play();
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.loop = false;
       audioRef.current.muted = false;
       setSoundEnabled(true);
     } catch (err) {
       console.warn("🔇 Sound cannot be played automatically: ", err);
     }
+  };
+
+  const startPersistentAlert = () => {
+    if (!soundEnabled || !audioRef.current) return;
+
+    audioRef.current.loop = true;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch((err) => {
+      console.warn("🔇 Failed to start persistent alert sound:", err);
+    });
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate([500, 250, 500]);
+      if (!vibrationIntervalRef.current) {
+        vibrationIntervalRef.current = setInterval(() => {
+          navigator.vibrate([500, 250, 500]);
+        }, 2000);
+      }
+    }
+
+    setIsAlertRinging(true);
+  };
+
+  const stopPersistentAlert = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.loop = false;
+    }
+
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+      vibrationIntervalRef.current = null;
+    }
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate(0);
+    }
+
+    setIsAlertRinging(false);
   };
 
   // ✅ تحميل الطلبات من الـ API
@@ -94,43 +137,18 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
   // ✅ إشعارات + صوت + نطق
   // ✅ إشعارات + صوت + نطق (مُحسَّن لـ iOS/Safari)
   const handleNotifyNewOrder = (order) => {
-    // 1. تشغيل الصوت
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-
-      // 🚀 التعديل الهام: استخدام .then().catch() لضمان معالجة فشل التشغيل التلقائي
-      const tryPlaySound = (attempt = 1) => {
-        audioRef.current
-          .play()
-          .then(() => {
-            // التشغيل نجح
-            console.log(
-              `🔔 The notification sound was enabled on attempt number${attempt}.`,
-            );
-          })
-          .catch((err) => {
-            // ❌ فشل التشغيل
-            console.warn(`🔇 Failed to play sound on attempt ${attempt}:`, err);
-
-            // **🚨 المحاولة الثانية المؤجلة (Retrial Logic)**
-            if (attempt === 1) {
-              console.log("🔄 Second attempt to play sound after 500 ms...");
-              setTimeout(() => {
-                tryPlaySound(2); // المحاولة الثانية
-              }, 500);
-            }
-          });
-      };
-
-      // ابدأ بالمحاولة الأولى
-      tryPlaySound(1);
-    }
+    // رنين مستمر لا يتوقف إلا بالزر.
+    startPersistentAlert();
 
     // 2. الإشعار التقليدي
     if (Notification.permission === "granted") {
       new Notification("🍔 New Order", {
         body: `Order Number : ${order.id}`,
         icon: "/qregylogo_192x192.png",
+        tag: "kitchen-new-order",
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [500, 200, 500],
       });
     }
 
@@ -199,6 +217,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
 
     return () => {
       clearInterval(intervalId);
+      stopPersistentAlert();
       socket.off("connect", handleConnect);
       socket.off("newOrder");
       socket.off("orderUpdated");
@@ -231,6 +250,19 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
           </button>
           <p className="text-sm text-gray-300 mt-2">
             Click once to enable sound, speech, and notifications
+          </p>
+        </div>
+      )}
+      {isAlertRinging && (
+        <div className="mb-4 text-center">
+          <button
+            onClick={stopPersistentAlert}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-md font-semibold"
+          >
+            Stop Alert
+          </button>
+          <p className="text-sm text-red-300 mt-2">
+            New order alarm is running. Press Stop Alert to silence it.
           </p>
         </div>
       )}

@@ -12,8 +12,10 @@ import { toast } from "sonner";
 function CashierManagment({ cashier, restaurant_id, user_id, token }) {
   const [orders, setOrders] = useState([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [isAlertRinging, setIsAlertRinging] = useState(false);
   const socketRef = useRef(null);
   const audioRef = useRef(null);
+  const vibrationIntervalRef = useRef(null);
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -27,11 +29,52 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
       await audioRef.current.play();
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.loop = false;
       audioRef.current.muted = false;
       setSoundEnabled(true);
     } catch (err) {
       console.warn("🔇 لا يمكن تشغيل الصوت تلقائيًا:", err);
     }
+  };
+
+  const startPersistentAlert = () => {
+    if (!soundEnabled || !audioRef.current) return;
+
+    audioRef.current.loop = true;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch((err) => {
+      console.warn("🔇 Failed to start persistent alert sound:", err);
+    });
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate([500, 250, 500]);
+      if (!vibrationIntervalRef.current) {
+        vibrationIntervalRef.current = setInterval(() => {
+          navigator.vibrate([500, 250, 500]);
+        }, 2000);
+      }
+    }
+
+    setIsAlertRinging(true);
+  };
+
+  const stopPersistentAlert = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.loop = false;
+    }
+
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+      vibrationIntervalRef.current = null;
+    }
+
+    if ("vibrate" in navigator) {
+      navigator.vibrate(0);
+    }
+
+    setIsAlertRinging(false);
   };
 
   const getOrders = async () => {
@@ -86,45 +129,18 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
   };
 
   const handleNotifyNewOrder = (order) => {
-    // 1. تشغيل الصوت
-    if (soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-
-      // 🚀 التعديل الهام: استخدام .then().catch() لضمان معالجة فشل التشغيل التلقائي
-      const tryPlaySound = (attempt = 1) => {
-        audioRef.current
-          .play()
-          .then(() => {
-            // التشغيل نجح
-            console.log(
-              `🔔 The notification sound was enabled on attempt number${attempt}.`,
-            );
-          })
-          .catch((err) => {
-            // ❌ فشل التشغيل
-            console.warn(`🔇 Failed to play sound on attempt ${attempt}:`, err);
-
-            // **🚨 المحاولة الثانية المؤجلة (Retrial Logic)**
-            if (attempt === 1) {
-              console.log(
-                "🔄 A second attempt to play the sound after 500ms...",
-              );
-              setTimeout(() => {
-                tryPlaySound(2); // المحاولة الثانية
-              }, 500);
-            }
-          });
-      };
-
-      // ابدأ بالمحاولة الأولى
-      tryPlaySound(1);
-    }
+    // رنين مستمر لا يتوقف إلا بالزر.
+    startPersistentAlert();
 
     // 2. الإشعار التقليدي
     if (Notification.permission === "granted") {
       new Notification("New order for cashier", {
         body: `Order Number : ${order.id}`,
         icon: "/logo.png",
+        tag: "cashier-new-order",
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [500, 200, 500],
       });
     }
 
@@ -161,7 +177,6 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
           setOrders((prev) =>
             prev.map((o) => (o.id === order_id ? { ...o, status } : o)),
           );
-          handleNotifyNewOrder({ id: order_id });
         });
 
         onNewOrder((order) => {
@@ -189,6 +204,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
 
     return () => {
       clearInterval(intervalId);
+      stopPersistentAlert();
       socket.off("connect", handleConnect);
       socket.off("newOrder");
       socket.off("orderUpdated");
@@ -221,6 +237,19 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
           </button>
           <p className="text-sm text-gray-300 mt-2">
             Click once to enable sound, speech, and notifications
+          </p>
+        </div>
+      )}
+      {isAlertRinging && (
+        <div className="mb-4 text-center">
+          <button
+            onClick={stopPersistentAlert}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-md font-semibold"
+          >
+            Stop Alert
+          </button>
+          <p className="text-sm text-red-300 mt-2">
+            New order alarm is running. Press Stop Alert to silence it.
           </p>
         </div>
       )}
