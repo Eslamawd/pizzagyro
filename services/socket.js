@@ -52,12 +52,16 @@ export const joinOrder = (order_id) => {
 };
 
 export const onNewOrder = (callback) => {
-  // ملاحظة: يجب إزالة المستمع القديم قبل إضافة مستمع جديد لتجنب التكرار في useEffect
+  // Support both naming styles from backend implementations.
   socket?.off("new_order");
+  socket?.off("newOrder");
   socket?.on("new_order", callback);
+  socket?.on("newOrder", callback);
 };
 
 export const onOrderUpdated = (callback) => {
   socket?.off("order_updated");
+  socket?.off("orderUpdated");
   socket?.on("order_updated", callback);
+  socket?.on("orderUpdated", callback);
 };

@@ -27,6 +27,10 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
   // ✅ تفعيل الصوت لتجاوز autoplay restriction
   const enableSound = async () => {
     try {
+      if ("Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+
       audioRef.current.muted = true;
       await audioRef.current.play();
       audioRef.current.pause();
@@ -176,32 +180,29 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
 
     const handleConnect = () => {
       console.log("✅ Socket connected. Joining kitchen...");
+      onOrderUpdated(({ order_id, status }) => {
+        setOrders((prev) => {
+          const updated = prev.map((o) =>
+            o.id === order_id ? { ...o, status } : o,
+          );
+          return updated.sort((a, b) => b.id - a.id);
+        });
+      });
+
+      onNewOrder((order) => {
+        toast.success(`🔔 New order! Table ${order.table?.name ?? order.id}`);
+        setOrders((prev) => {
+          const exists = prev.some((o) => o.id === order.id);
+          const updated = exists
+            ? prev.map((o) => (o.id === order.id ? order : o))
+            : [...prev, order];
+          return updated.sort((a, b) => b.id - a.id);
+        });
+        handleNotifyNewOrder(order);
+      });
+
       joinKitchen(restaurant_id, (response) => {
-        console.log("✅ Joined room:", response.room);
-
-        socket.off("newOrder");
-        socket.off("orderUpdated");
-
-        onOrderUpdated(({ order_id, status }) => {
-          setOrders((prev) => {
-            const updated = prev.map((o) =>
-              o.id === order_id ? { ...o, status } : o,
-            );
-            return updated.sort((a, b) => b.id - a.id);
-          });
-        });
-
-        onNewOrder((order) => {
-          toast.success(`🔔 New order! Table ${order.table?.name ?? order.id}`);
-          setOrders((prev) => {
-            const exists = prev.some((o) => o.id === order.id);
-            const updated = exists
-              ? prev.map((o) => (o.id === order.id ? order : o))
-              : [...prev, order];
-            return updated.sort((a, b) => b.id - a.id);
-          });
-          handleNotifyNewOrder(order);
-        });
+        console.log("✅ Joined room:", response?.room || "kitchen room");
       });
     };
 
@@ -219,7 +220,9 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
       clearInterval(intervalId);
       stopPersistentAlert();
       socket.off("connect", handleConnect);
+      socket.off("new_order");
       socket.off("newOrder");
+      socket.off("order_updated");
       socket.off("orderUpdated");
       disconnectSocket();
     };
