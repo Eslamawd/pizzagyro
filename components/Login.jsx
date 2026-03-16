@@ -78,7 +78,16 @@ const Login = () => {
       const userData = response.data.user;
       await login(userData);
       toast.success("Login successful ✅");
-      router.push("/");
+
+      if (userData.role === "admin") {
+        router.push("/dashboard");
+      } else if (userData.role === "cashier") {
+        router.push("/cashier");
+      } else if (userData.role === "kitchen") {
+        router.push("/kitchen");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       if (err.response?.status === 422) {
         toast.error("Invalid email or password");
@@ -104,7 +113,7 @@ const Login = () => {
       setShowResetDialog(false);
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "Failed to send password reset link"
+        err.response?.data?.message || "Failed to send password reset link",
       );
     } finally {
       setResetSubmitting(false);
@@ -217,8 +226,8 @@ const Login = () => {
                       ? "جاري تسجيل الدخول..."
                       : "Logging in..."
                     : lang === "ar"
-                    ? "تسجيل الدخول"
-                    : "Login"}
+                      ? "تسجيل الدخول"
+                      : "Login"}
                 </Button>
               </div>
             </form>
@@ -298,8 +307,8 @@ const Login = () => {
                 ? "جاري الإرسال..."
                 : "Sending..."
               : lang === "ar"
-              ? "إرسال الرابط"
-              : "Send Link"}
+                ? "إرسال الرابط"
+                : "Send Link"}
           </Button>
         </DialogContent>
       </Dialog>

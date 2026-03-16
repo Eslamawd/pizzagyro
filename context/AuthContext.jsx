@@ -45,6 +45,10 @@ export const AuthProvider = ({ children }) => {
         expires: 1, // 1 day
         sameSite: "Lax",
       });
+      Cookies.set("ticket_management_is_user_logged_in", "1", {
+        expires: 1,
+        sameSite: "Lax",
+      });
     }
     return null;
   };
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }) => {
       if (response.status === 200) {
         setUser(null);
         Cookies.remove("ticket_management_is_user_logged_in");
+        Cookies.remove("ticket_management_user_name");
       }
     } catch (e) {
       console.warn("Logout failed:", e.message);

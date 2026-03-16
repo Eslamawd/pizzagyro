@@ -104,8 +104,8 @@ const UserManagement = () => {
         users.filter(
           (user) =>
             user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+            user.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        ),
       );
     } else {
       setFilteredUsers(users);
@@ -136,7 +136,7 @@ const UserManagement = () => {
 
       const updatedUser = response.user;
       const updatedUsers = users.map((u) =>
-        u.id === userId ? updatedUser : u
+        u.id === userId ? updatedUser : u,
       );
       setUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
@@ -165,12 +165,12 @@ const UserManagement = () => {
       const response = await depositBalance(
         selectedUser.id,
         { amount: balanceAmount },
-        balanceAction
+        balanceAction,
       );
 
       const updatedUser = response.user;
       const updatedUsers = users.map((u) =>
-        u.id === selectedUser.id ? updatedUser : u
+        u.id === selectedUser.id ? updatedUser : u,
       );
       setUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
@@ -238,8 +238,8 @@ const UserManagement = () => {
                     ? "حاول تعديل نص البحث"
                     : "Try adjusting your search"
                   : lang === "ar"
-                  ? "لم يتم تسجيل أي مستخدم بعد"
-                  : "No users have been registered yet"}
+                    ? "لم يتم تسجيل أي مستخدم بعد"
+                    : "No users have been registered yet"}
               </p>
             </div>
           ) : (
@@ -282,21 +282,34 @@ const UserManagement = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === "admin"
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                              : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-                          }`}
-                        >
-                          {user.role === "admin"
-                            ? lang === "ar"
-                              ? "مسؤول"
-                              : "Admin"
-                            : lang === "ar"
-                            ? "مستخدم"
-                            : "User"}
-                        </span>
+                        {(() => {
+                          const roleStyles = {
+                            admin:
+                              "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+                            user: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+                            cashier:
+                              "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                            kitchen:
+                              "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400",
+                          };
+
+                          const roleLabel = {
+                            admin: lang === "ar" ? "مسؤول" : "Admin",
+                            user: lang === "ar" ? "مستخدم" : "User",
+                            cashier: lang === "ar" ? "كاشير" : "Cashier",
+                            kitchen: lang === "ar" ? "مطبخ" : "Kitchen",
+                          };
+
+                          return (
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                roleStyles[user.role] || roleStyles.user
+                              }`}
+                            >
+                              {roleLabel[user.role] || user.role}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-3">
@@ -328,6 +341,12 @@ const UserManagement = () => {
                               </SelectItem>
                               <SelectItem value="admin">
                                 {lang === "ar" ? "مسؤول" : "Admin"}
+                              </SelectItem>
+                              <SelectItem value="cashier">
+                                {lang === "ar" ? "كاشير" : "Cashier"}
+                              </SelectItem>
+                              <SelectItem value="kitchen">
+                                {lang === "ar" ? "مطبخ" : "Kitchen"}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -406,8 +425,8 @@ const UserManagement = () => {
                       ? "إيداع"
                       : "Deposit"
                     : lang === "ar"
-                    ? "سحب"
-                    : "Withdraw"}
+                      ? "سحب"
+                      : "Withdraw"}
                 </motion.div>
               </DialogTitle>
               <DialogDescription>
@@ -416,8 +435,8 @@ const UserManagement = () => {
                     ? "إضافة أموال إلى رصيد المستخدم"
                     : "Add funds to the user's account balance"
                   : lang === "ar"
-                  ? "إزالة أموال من رصيد المستخدم"
-                  : "Remove funds from the user's account balance"}
+                    ? "إزالة أموال من رصيد المستخدم"
+                    : "Remove funds from the user's account balance"}
               </DialogDescription>
             </DialogHeader>
 
@@ -492,8 +511,8 @@ const UserManagement = () => {
                     ? "إضافة رصيد"
                     : "Add Funds"
                   : lang === "ar"
-                  ? "سحب رصيد"
-                  : "Remove Funds"}
+                    ? "سحب رصيد"
+                    : "Remove Funds"}
               </Button>
             </DialogFooter>
           </DialogContent>

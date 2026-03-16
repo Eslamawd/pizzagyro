@@ -73,6 +73,24 @@ export const Header = () => {
               </Link>
             )}
 
+            {user && user.role === "cashier" && (
+              <Link
+                href="/cashier"
+                className="px-4 py-2 rounded-xl hidden md:block border border-gray-600 hover:border-gray-400 transition"
+              >
+                {lang === "ar" ? "لوحة الكاشير" : "Cashier"}
+              </Link>
+            )}
+
+            {user && user.role === "kitchen" && (
+              <Link
+                href="/kitchen"
+                className="px-4 py-2 rounded-xl hidden md:block border border-gray-600 hover:border-gray-400 transition"
+              >
+                {lang === "ar" ? "لوحة المطبخ" : "Kitchen"}
+              </Link>
+            )}
+
             {user ? (
               <>
                 {/* ✅ Cart Button */}
@@ -137,6 +155,36 @@ export const Header = () => {
                   >
                     <Settings className="w-4 h-4" />
                     {lang === "ar" ? "الإدارة" : "Dashboard"}
+                  </Link>
+                </Button>
+              )}
+
+              {user?.role === "cashier" && (
+                <Button
+                  onClick={() => setMenuOpen(false)}
+                  className="justify-between"
+                >
+                  <Link
+                    href="/cashier"
+                    className="flex items-center justify-center gap-2 w-full"
+                  >
+                    <Settings className="w-4 h-4" />
+                    {lang === "ar" ? "لوحة الكاشير" : "Cashier"}
+                  </Link>
+                </Button>
+              )}
+
+              {user?.role === "kitchen" && (
+                <Button
+                  onClick={() => setMenuOpen(false)}
+                  className="justify-between"
+                >
+                  <Link
+                    href="/kitchen"
+                    className="flex items-center justify-center gap-2 w-full"
+                  >
+                    <Settings className="w-4 h-4" />
+                    {lang === "ar" ? "لوحة المطبخ" : "Kitchen"}
                   </Link>
                 </Button>
               )}
