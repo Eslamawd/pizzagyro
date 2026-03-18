@@ -12,6 +12,7 @@ import {
   subscribeFirebaseForegroundMessages,
 } from "@/lib/firebaseWebPush";
 import { toast } from "sonner";
+import { MapPin } from "lucide-react";
 
 function CashierManagment({ cashier, restaurant_id, user_id, token }) {
   const [orders, setOrders] = useState([]);
@@ -363,9 +364,20 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
                 {order?.phone && (
                   <a
                     href={`tel:${order.phone}`}
-                    className="text-lg underline hover:text-orange-500"
+                    className="text-lg underline hover:text-orange-50"
                   >
                     📞 Phone: {order.phone}
+                  </a>
+                )}
+                {order.latitude && order.longitude && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-orange-100 hover:underline"
+                  >
+                    Map
+                    <MapPin className="inline-block text-orange-100 mr-1 mb-1" />
                   </a>
                 )}
 
