@@ -7,6 +7,10 @@ import {
   disconnectSocket,
   onOrderUpdated,
 } from "@/services/socket"; // ✅ تم تصحيح المسار
+import {
+  initFirebaseWebPush,
+  subscribeFirebaseForegroundMessages,
+} from "@/lib/firebaseWebPush";
 import { toast } from "sonner";
 
 function CashierManagment({ cashier, restaurant_id, user_id, token }) {
@@ -16,6 +20,19 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
   const socketRef = useRef(null);
   const audioRef = useRef(null);
   const vibrationIntervalRef = useRef(null);
+  const notifiedEventsRef = useRef(new Map());
+
+  const markNotificationEvent = (eventKey) => {
+    const now = Date.now();
+    const lastAt = notifiedEventsRef.current.get(eventKey) || 0;
+
+    if (now - lastAt < 4000) {
+      return false;
+    }
+
+    notifiedEventsRef.current.set(eventKey, now);
+    return true;
+  };
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -118,6 +135,8 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
         { status },
       );
 
+      stopPersistentAlert();
+
       setOrders((prev) => {
         const updated = prev.map((order) =>
           order.id === orderId ? { ...order, status } : order,
@@ -164,6 +183,44 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
   };
 
   useEffect(() => {
+    let unsubscribe = () => {};
+
+    const bindFirebase = async () => {
+      const result = await initFirebaseWebPush("web-cashier");
+
+      if (!result.enabled) {
+        return;
+      }
+
+      unsubscribe = await subscribeFirebaseForegroundMessages((payload) => {
+        const data = payload?.data || {};
+        const eventType = String(data.event || "new_order").toLowerCase();
+        const orderId = Number(data.order_id || data.orderId || 0);
+
+        if (!orderId) {
+          return;
+        }
+
+        if (!markNotificationEvent(`firebase-${eventType}-${orderId}`)) {
+          return;
+        }
+
+        handleNotifyNewOrder({ id: orderId });
+        toast.success(`🔔 Firebase alert for order #${orderId}`);
+        getOrders();
+      });
+    };
+
+    bindFirebase().catch((error) => {
+      console.warn("Firebase push setup failed:", error);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
     getOrders();
 
     const socket = connectSocket();
@@ -172,12 +229,23 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
     const handleConnect = () => {
       console.log("✅ Socket connected. Joining cashier...");
       onOrderUpdated(({ order_id, status }) => {
+        if (
+          order_id &&
+          markNotificationEvent(`socket-order-updated-${order_id}`)
+        ) {
+          handleNotifyNewOrder({ id: order_id });
+        }
+
         setOrders((prev) =>
           prev.map((o) => (o.id === order_id ? { ...o, status } : o)),
         );
       });
 
       onNewOrder((order) => {
+        if (!markNotificationEvent(`socket-new-order-${order.id}`)) {
+          return;
+        }
+
         toast.success(`🔔 New order! Table ${order.table?.name ?? order.id}`);
         setOrders((prev) => {
           const exists = prev.some((o) => o.id === order.id);
