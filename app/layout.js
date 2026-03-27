@@ -22,10 +22,7 @@ export const metadata = {
   title: "Pizza & Gyro Party | Premium Smart Menu",
   description:
     "Order the best Pizza and Mediterranean Gyro in town. Fully customize your meal with our smart digital menu.",
-
-  // 1. لازم تحط رابط موقعك هنا عشان الصور تشتغل بروابط صحيحة
   metadataBase: new URL("https://pizzagyropartyrestaurant.com"),
-
   keywords: [
     "Pizza & Gyro Party",
     "Pizza Menu",
@@ -37,7 +34,6 @@ export const metadata = {
   ],
   manifest: "/manifest.json",
 
-  // 2. ده الجزء السحري اللي بيظهّر اللوجو في الواتساب
   openGraph: {
     title: "Pizza & Gyro Party",
     description: "Order the best Pizza and Mediterranean Gyro in town",
