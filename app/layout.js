@@ -26,6 +26,15 @@ export const metadata = {
   // 1. لازم تحط رابط موقعك هنا عشان الصور تشتغل بروابط صحيحة
   metadataBase: new URL("https://pizzagyropartyrestaurant.com"),
 
+  keywords: [
+    "Pizza & Gyro Party",
+    "Pizza Menu",
+    "Mediterranean Gyro",
+    "Smart Digital Menu",
+    "Online Food Ordering",
+    "Customizable Meals",
+    "Food Delivery",
+  ],
   manifest: "/manifest.json",
 
   // 2. ده الجزء السحري اللي بيظهّر اللوجو في الواتساب
@@ -33,31 +42,28 @@ export const metadata = {
     title: "Pizza & Gyro Party",
     description: "Order the best Pizza and Mediterranean Gyro in town",
     url: "https://pizzagyropartyrestaurant.com",
-    siteName: "Pizza & Gyro",
+    type: "website",
     images: [
       {
-        url: "/logo.png", // تأكد إن الصورة دي في فولدر public ومساحتها معقولة
-        width: 800,
-        height: 800,
+        url: "/geros.png", // تأكد إن الصورة دي في فولدر public ومساحتها معقولة
+        width: 1200,
+        height: 1200,
         alt: "Pizza & Gyro Logo",
       },
     ],
-    locale: "en_US",
-    type: "website",
   },
 
   // 3. عشان يظهر بشكل شيك في تويتر/X
   twitter: {
     card: "summary_large_image",
-    images: ["/logo.png"],
+    images: ["/geros.png"],
   },
 
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/geros.png",
+    apple: "/geros.png",
   },
 
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -71,8 +77,8 @@ export const metadata = {
     },
   },
   icons: {
-    icon: "/logo.png", // Ensure you have your logo here
-    apple: "/logo.png",
+    icon: "/geros.png", // Ensure you have your logo here
+    apple: "/geros.png",
   },
 };
 
