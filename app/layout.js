@@ -24,7 +24,7 @@ export const metadata = {
     "Order the best Pizza and Mediterranean Gyro in town. Fully customize your meal with our smart digital menu.",
 
   // 1. لازم تحط رابط موقعك هنا عشان الصور تشتغل بروابط صحيحة
-  metadataBase: new URL("https://your-pizza-domain.com"),
+  metadataBase: new URL("https://pizzagyropartyrestaurant.com"),
 
   manifest: "/manifest.json",
 
