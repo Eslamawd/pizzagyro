@@ -22,6 +22,41 @@ export const metadata = {
   title: "Pizza & Gyro Party | Premium Smart Menu",
   description:
     "Order the best Pizza and Mediterranean Gyro in town. Fully customize your meal with our smart digital menu.",
+
+  // 1. لازم تحط رابط موقعك هنا عشان الصور تشتغل بروابط صحيحة
+  metadataBase: new URL("https://your-pizza-domain.com"),
+
+  manifest: "/manifest.json",
+
+  // 2. ده الجزء السحري اللي بيظهّر اللوجو في الواتساب
+  openGraph: {
+    title: "Pizza & Gyro Party",
+    description: "Order the best Pizza and Mediterranean Gyro in town",
+    url: "https://pizzagyropartyrestaurant.com",
+    siteName: "Pizza & Gyro",
+    images: [
+      {
+        url: "/logo.png", // تأكد إن الصورة دي في فولدر public ومساحتها معقولة
+        width: 800,
+        height: 800,
+        alt: "Pizza & Gyro Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+
+  // 3. عشان يظهر بشكل شيك في تويتر/X
+  twitter: {
+    card: "summary_large_image",
+    images: ["/logo.png"],
+  },
+
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -31,7 +66,7 @@ export const metadata = {
   other: {
     "preconnect-api": {
       rel: "preconnect",
-      href: "https://api.qregy.com", // Keeping your API endpoint
+      href: "https://api.pizzagyropartyrestaurant.com", // Keeping your API endpoint
       crossOrigin: "anonymous",
     },
   },
