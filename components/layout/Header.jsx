@@ -37,7 +37,7 @@ export const Header = () => {
           {/* Logo */}
           <Link href={"/"} className="flex items-center gap-3">
             <img
-              src="/geros.png"
+              src="/geros2.png"
               alt="Pizza & Gyro Party"
               className=" w-45 h-20 object-cover "
             />

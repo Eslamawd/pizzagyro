@@ -24,7 +24,7 @@ const Hero = () => {
           >
             {/* استبدل المسار بشعار المطعم الحقيقي */}
             <img
-              src="geros.png"
+              src="geros2.png"
               alt="Pizza & Gyro Party"
               className="  w-70 h-70 m-0 "
             />
