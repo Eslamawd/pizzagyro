@@ -140,23 +140,6 @@ export const canProceedDeliveryPayment = ({
     return false;
   }
 
-  if (!scheduledDate || !scheduledTime) {
-    toast.error("Please choose order date and time.");
-    return false;
-  }
-
-  if (isClosedWeekDay(scheduledDate)) {
-    toast.error("Selected day is closed. Please choose another date.");
-    return false;
-  }
-
-  if (!isWithinBusinessHours(scheduledDate, scheduledTime)) {
-    toast.error(
-      `Selected time is outside business hours. ${BUSINESS_HOURS_TEXT}`,
-    );
-    return false;
-  }
-
   return true;
 };
 
@@ -243,26 +226,6 @@ export const submitDeliveryOrder = async ({
 
   if (!customerName?.trim()) {
     toast.error("Please enter customer name.");
-    setShowCart(false);
-    return;
-  }
-
-  if (!scheduledDate || !scheduledTime) {
-    toast.error("Please choose order date and time.");
-    setShowCart(false);
-    return;
-  }
-
-  if (isClosedWeekDay(scheduledDate)) {
-    toast.error("Selected day is closed. Please choose another date.");
-    setShowCart(false);
-    return;
-  }
-
-  if (!isWithinBusinessHours(scheduledDate, scheduledTime)) {
-    toast.error(
-      `Selected time is outside business hours. ${BUSINESS_HOURS_TEXT}`,
-    );
     setShowCart(false);
     return;
   }
