@@ -325,7 +325,7 @@ function CashierManagment({ cashier, restaurant_id, user_id, token }) {
           </p>
         </div>
       )}
-      <audio ref={audioRef} preload="auto">
+      <audio ref={audioRef} preload="auto" playsInline>
         <source src="/sounds/ding.mp3" type="audio/mpeg" />
         <source src="/sounds/ding.ogg" type="audio/ogg" />
       </audio>
