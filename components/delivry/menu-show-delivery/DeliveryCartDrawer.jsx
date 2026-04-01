@@ -363,33 +363,6 @@ const DeliveryCartDrawer = ({
                       </div>
                     </div>
 
-                    {orderType === "delivery" && (
-                      <div className="space-y-1">
-                        <span className="text-sm text-slate-600">Address:</span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            placeholder="Enter delivery address manually"
-                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            value={location?.address || ""}
-                            onChange={handleAddressChange}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleUseGpsAddress}
-                            disabled={isResolvingGpsAddress}
-                            className="h-10 px-3 text-xs whitespace-nowrap"
-                          >
-                            {isResolvingGpsAddress ? "Loading..." : "Use GPS"}
-                          </Button>
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          You can type address manually. GPS location stays enabled.
-                        </p>
-                      </div>
-                    )}
-
                     <div className="space-y-1">
                       <span className="text-sm text-slate-600">
                         Receive On:
