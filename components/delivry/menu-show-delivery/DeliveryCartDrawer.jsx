@@ -278,22 +278,22 @@ const DeliveryCartDrawer = ({
                   initial={{ opacity: 0, y: 30, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.96 }}
-                  className="w-full max-w-xl rounded-2xl bg-white shadow-2xl p-6"
+                  className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl p-6"
                 >
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-xl font-black text-slate-900">
                       Checkout
                     </h3>
-                    <Button
+                    <span
                       variant="ghost"
                       onClick={() => setShowCheckoutScreen(false)}
                       className="rounded-full bg-slate-100"
                     >
                       <X />
-                    </Button>
+                    </span>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 ">
                     <div className="space-y-2">
                       <span className="text-sm text-slate-600 font-semibold">
                         Order Type:
@@ -362,6 +362,35 @@ const DeliveryCartDrawer = ({
                         />
                       </div>
                     </div>
+
+                    {orderType === "delivery" && (
+                      <div className="space-y-1">
+                        <span className="text-sm text-slate-600">Address:</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Enter delivery address manually"
+                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            value={location?.address || ""}
+                            onChange={handleAddressChange}
+                          />
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown
+                            onClick={handleUseGpsAddress}
+                            disabled={isResolvingGpsAddress}
+                            className="h-10 px-3 text-xs whitespace-nowrap"
+                          >
+                            {isResolvingGpsAddress ? "Loading..." : "Use GPS"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          You can type address manually. GPS location stays
+                          enabled.
+                        </p>
+                      </div>
+                    )}
 
                     <div className="space-y-1">
                       <span className="text-sm text-slate-600">
