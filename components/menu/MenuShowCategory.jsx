@@ -25,6 +25,11 @@ const MenuShowCategory = ({ table_id, restaurant_id, user_id, token }) => {
   const { formatPrice } = useCurrency();
   const isArabic = lang === "ar";
   const t = (ar, en) => (isArabic ? ar : en);
+  const getEffectiveDiscount = (menu, category) => {
+    const categoryDiscount = Number(category?.discount_percentage || 0);
+    const menuDiscount = Number(menu?.discount_percentage || 0);
+    return categoryDiscount > 0 ? categoryDiscount : menuDiscount;
+  };
 
   const socialLinks = [
     {
@@ -61,7 +66,7 @@ const MenuShowCategory = ({ table_id, restaurant_id, user_id, token }) => {
       } catch (err) {
         console.error(err);
         toast.error(
-          t("فشل تحميل بيانات المطعم", "Failed to load restaurant data")
+          t("فشل تحميل بيانات المطعم", "Failed to load restaurant data"),
         );
       }
     };
@@ -142,6 +147,11 @@ const MenuShowCategory = ({ table_id, restaurant_id, user_id, token }) => {
                 onClick={() => setSelectedMenu(menu)}
                 className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden cursor-pointer group shadow-2xl"
               >
+                {Number(menu.discount_percentage || 0) > 0 && (
+                  <div className="absolute top-4 left-4 z-10 bg-red-600/95 text-white text-xs sm:text-sm font-black px-3 py-1 rounded-full shadow-lg border border-white/20">
+                    UP TO {Number(menu.discount_percentage).toFixed(0)}% OFF
+                  </div>
+                )}
                 <img
                   src={menu.image}
                   alt={menu.name}
@@ -189,14 +199,30 @@ const MenuShowCategory = ({ table_id, restaurant_id, user_id, token }) => {
                   <h4 className="text-2xl font-black mb-6 flex items-center gap-3 text-slate-800 border-b pb-3">
                     <span className="bg-orange-100 text-orange-600 p-2 rounded-xl"></span>
                     {cat.name}
+                    {getEffectiveDiscount(selectedMenu, cat) > 0 && (
+                      <span className="ml-auto bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full">
+                        {Number(
+                          getEffectiveDiscount(selectedMenu, cat),
+                        ).toFixed(0)}
+                        % OFF
+                      </span>
+                    )}
                   </h4>
                   <div className="grid gap-4">
                     {cat.items?.map((item) => (
                       <motion.div
                         key={item.id}
                         whileTap={{ scale: 0.98 }}
-                        className="bg-white p-4 rounded-3xl flex gap-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                        className="relative bg-white p-4 rounded-3xl flex gap-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
                       >
+                        {getEffectiveDiscount(selectedMenu, cat) > 0 && (
+                          <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[11px] font-black px-2 py-1 rounded-full shadow">
+                            {Number(
+                              getEffectiveDiscount(selectedMenu, cat),
+                            ).toFixed(0)}
+                            % OFF
+                          </div>
+                        )}
                         <img
                           src={item.image}
                           alt={item.name}

@@ -13,13 +13,12 @@ import {
   normalizeUSPhone,
 } from "./utils";
 
-const getValidatedLocation = ({ location, setShowCart, setShowLocModal }) => {
+const getValidatedLocation = ({ location, setShowLocModal }) => {
   const customerLat = normalizeCoordinate(location.lat);
   const customerLng = normalizeUSLongitude(location.lng);
 
   if (customerLat === null || customerLng === null) {
     toast.error("Invalid customer location. Please reselect your location.");
-    setShowCart(false);
     setShowLocModal(true);
     return null;
   }
@@ -79,7 +78,6 @@ export const canProceedDeliveryPayment = ({
   customerName,
   scheduledDate,
   scheduledTime,
-  setShowCart,
   setShowLocModal,
 }) => {
   const discountedSubtotal = Number(
@@ -101,14 +99,12 @@ export const canProceedDeliveryPayment = ({
   if (orderType === "delivery") {
     if (!location.isSet || !location.address) {
       toast.error("Please set your delivery location first!");
-      setShowCart(false);
       setShowLocModal(true);
       return false;
     }
 
     const validated = getValidatedLocation({
       location,
-      setShowCart,
       setShowLocModal,
     });
     if (!validated) return false;
@@ -162,7 +158,6 @@ export const submitDeliveryOrder = async ({
   scheduledDate,
   scheduledTime,
   addNewOrderDelivery,
-  setShowCart,
   setShowLocModal,
   setShowPaymentModal,
   setCart,
@@ -184,14 +179,12 @@ export const submitDeliveryOrder = async ({
   if (orderType === "delivery") {
     if (!location.isSet || !location.address) {
       toast.error("Please set your delivery location first!");
-      setShowCart(false);
       setShowLocModal(true);
       return;
     }
 
     validated = getValidatedLocation({
       location,
-      setShowCart,
       setShowLocModal,
     });
     if (!validated) return;
@@ -222,7 +215,6 @@ export const submitDeliveryOrder = async ({
 
   if (!phone?.trim()) {
     toast.error("Please enter your phone number.");
-    setShowCart(false);
     return;
   }
 
@@ -230,13 +222,11 @@ export const submitDeliveryOrder = async ({
     toast.error(
       "Please enter a valid US phone number (example: +1 615 555 1234).",
     );
-    setShowCart(false);
     return;
   }
 
   if (!customerName?.trim()) {
     toast.error("Please enter customer name.");
-    setShowCart(false);
     return;
   }
 

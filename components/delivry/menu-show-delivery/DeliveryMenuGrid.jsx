@@ -26,6 +26,11 @@ const DeliveryMenuGrid = ({
             onClick={() => onSelectMenu(menu)}
             className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden cursor-pointer group shadow-2xl"
           >
+            {Number(menu.discount_percentage || 0) > 0 && (
+              <div className="absolute top-4 left-4 z-10 bg-red-600/95 text-white text-xs sm:text-sm font-black px-3 py-1 rounded-full shadow-lg border border-white/20">
+                UP TO {Number(menu.discount_percentage).toFixed(0)}% OFF
+              </div>
+            )}
             <img
               src={menu.image}
               alt={menu.name}

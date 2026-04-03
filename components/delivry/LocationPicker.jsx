@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Button } from "@/components/ui/button";
@@ -39,6 +45,12 @@ export default function LocationPicker({ location, setLocation, onClose }) {
       handleAutoLocate(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (location?.lat && location?.lng) {
+      setCoords({ lat: location.lat, lng: location.lng });
+    }
+  }, [location?.lat, location?.lng]);
 
   /* REVERSE GEOCODE */
   const resolveAddress = async (lat, lon) => {
@@ -145,6 +157,18 @@ export default function LocationPicker({ location, setLocation, onClose }) {
     return null;
   };
 
+  const RecenterMap = ({ lat, lng }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (lat != null && lng != null) {
+        map.setView([lat, lng], map.getZoom(), { animate: true });
+      }
+    }, [lat, lng, map]);
+
+    return null;
+  };
+
   /* SEARCH LOCATIONS */
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -220,6 +244,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
             className="h-full w-full"
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <RecenterMap lat={coords.lat} lng={coords.lng} />
             <Marker
               position={[coords.lat, coords.lng]}
               draggable

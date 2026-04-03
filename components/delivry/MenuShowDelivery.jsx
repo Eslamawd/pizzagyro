@@ -7,7 +7,6 @@ import { RESTAURANT_DATA } from "./RestaurantData";
 import DeliveryCartDrawer from "./menu-show-delivery/DeliveryCartDrawer";
 import DeliveryFloatingCartButton from "./menu-show-delivery/DeliveryFloatingCartButton";
 import DeliveryItemModal from "./menu-show-delivery/DeliveryItemModal";
-import DeliveryLocationBar from "./menu-show-delivery/DeliveryLocationBar";
 import DeliveryLocationModal from "./menu-show-delivery/DeliveryLocationModal";
 import DeliveryMenuGrid from "./menu-show-delivery/DeliveryMenuGrid";
 import DeliveryMenuModal from "./menu-show-delivery/DeliveryMenuModal";
@@ -75,11 +74,6 @@ const MenuShowDelivery = () => {
 
   return (
     <section className="min-h-screen mt-30 w-full pb-32 font-sans">
-      <DeliveryLocationBar
-        location={location}
-        onClick={() => setShowLocModal(true)}
-      />
-
       <DeliveryMenuGrid
         restaurantName={RESTAURANT_DATA.name}
         menus={menus}
@@ -127,6 +121,7 @@ const MenuShowDelivery = () => {
         setScheduledDate={setScheduledDate}
         setScheduledTime={setScheduledTime}
         setOrderType={setOrderType}
+        setShowLocModal={setShowLocModal}
         updateQty={updateQty}
         removeFromCart={removeFromCart}
         onClose={() => setShowCart(false)}

@@ -42,48 +42,6 @@ const useMenuShowDelivery = () => {
   const pricingSummary = calculateCartPricing(cart, orderType, tipPercentage);
 
   useEffect(() => {
-    const fetchLocation = async (lat, lng) => {
-      try {
-        const response = await fetch(
-          `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
-        );
-        if (!response.ok) throw new Error("Failed to fetch address");
-        const data = await response.json();
-        const addressData = data.address || {};
-        const address =
-          addressData.neighbourhood ||
-          addressData.suburb ||
-          addressData.city_district ||
-          addressData.town ||
-          addressData.city ||
-          "Your location";
-        setLocation({ lat, lng, address, isSet: true });
-      } catch (error) {
-        console.log("Error fetching location:", error);
-        setLocation({ lat, lng, address: "Your location", isSet: true });
-      }
-    };
-
-    if (!location.isSet && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchLocation(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.log("Please enable GPS", error);
-          setLocation({
-            lat: null,
-            lng: null,
-            address: "Your location",
-            isSet: true,
-          });
-        },
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
-    }
-  }, [location.isSet]);
-
-  useEffect(() => {
     const getMenusApi = async () => {
       try {
         const response = await getMenus();

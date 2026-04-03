@@ -25,6 +25,7 @@ const DeliveryCartDrawer = ({
   setScheduledDate,
   setScheduledTime,
   setOrderType,
+  setShowLocModal,
   updateQty,
   removeFromCart,
   onClose,
@@ -408,6 +409,14 @@ const DeliveryCartDrawer = ({
                           You can type address manually. GPS location stays
                           enabled.
                         </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full mt-2"
+                          onClick={() => setShowLocModal(true)}
+                        >
+                          Choose location on map
+                        </Button>
                       </div>
                     )}
 

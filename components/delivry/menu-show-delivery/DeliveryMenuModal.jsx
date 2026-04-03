@@ -10,6 +10,12 @@ const DeliveryMenuModal = ({
   selectedOptions,
   handleOptionSelect,
 }) => {
+  const getEffectiveDiscount = (category) => {
+    const categoryDiscount = Number(category?.discount_percentage || 0);
+    const menuDiscount = Number(selectedMenu?.discount_percentage || 0);
+    return categoryDiscount > 0 ? categoryDiscount : menuDiscount;
+  };
+
   return (
     <AnimatePresence>
       {selectedMenu && (
@@ -39,6 +45,11 @@ const DeliveryMenuModal = ({
                     {getMenuIcon(selectedMenu.name)}
                   </span>
                   {category.name}
+                  {getEffectiveDiscount(category) > 0 && (
+                    <span className="ml-auto bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full">
+                      {Number(getEffectiveDiscount(category)).toFixed(0)}% OFF
+                    </span>
+                  )}
                 </h4>
 
                 <div className="grid gap-4">
@@ -62,8 +73,14 @@ const DeliveryMenuModal = ({
                           ),
                         })
                       }
-                      className="bg-white p-4 rounded-3xl flex gap-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                      className="relative bg-white p-4 rounded-3xl flex gap-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     >
+                      {getEffectiveDiscount(category) > 0 && (
+                        <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[11px] font-black px-2 py-1 rounded-full shadow">
+                          {Number(getEffectiveDiscount(category)).toFixed(0)}%
+                          OFF
+                        </div>
+                      )}
                       <img
                         src={item.image}
                         alt={item.name}

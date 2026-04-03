@@ -16,7 +16,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
   const [formData, setFormData] = useState({
     name: menu?.name || "",
     discount_percentage: Number(menu?.discount_percentage || 0),
-    image: menu?.image || null,
+    image: null,
   });
   const [preview, setPreview] = useState({
     image: menu?.image || null,
@@ -44,7 +44,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() && !formData.image) {
+    if (!formData.name.trim()) {
       toast.error(
         lang === "ar"
           ? "الرجاء إدخال جميع الحقول المطلوبة"
@@ -61,7 +61,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
         "discount_percentage",
         Number(formData.discount_percentage || 0),
       );
-      if (formData.image) {
+      if (formData.image instanceof File) {
         data.append("image", formData.image);
       }
       data.append("_method", "PATCH"); // ← Laravel method spoofing
