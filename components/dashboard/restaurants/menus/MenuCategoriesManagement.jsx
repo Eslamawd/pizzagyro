@@ -57,7 +57,7 @@ const MenuCategoriesManagement = ({ menuId }) => {
     } catch (err) {
       console.error(err);
       toast.error(
-        lang === "ar" ? "فشل تحميل الأقسام" : "Failed to load categories"
+        lang === "ar" ? "فشل تحميل الأقسام" : "Failed to load categories",
       );
     }
   };
@@ -92,11 +92,11 @@ const MenuCategoriesManagement = ({ menuId }) => {
       setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
       setShowDeleteDialog(false);
       toast.success(
-        lang === "ar" ? "تم حذف القسم بنجاح" : "Category deleted successfully"
+        lang === "ar" ? "تم حذف القسم بنجاح" : "Category deleted successfully",
       );
     } catch (err) {
       toast.error(
-        lang === "ar" ? "فشل حذف القسم" : "Failed to delete category"
+        lang === "ar" ? "فشل حذف القسم" : "Failed to delete category",
       );
     }
   };
@@ -167,8 +167,8 @@ const MenuCategoriesManagement = ({ menuId }) => {
                   ? "إضافة قسم جديد"
                   : "Add New Category"
                 : lang === "ar"
-                ? "تعديل القسم"
-                : "Edit Category"}
+                  ? "تعديل القسم"
+                  : "Edit Category"}
             </DialogTitle>
             <DialogDescription>
               {lang === "ar"
@@ -185,7 +185,7 @@ const MenuCategoriesManagement = ({ menuId }) => {
               if (isNew) setCategories((prev) => [saved, ...prev]);
               else
                 setCategories((prev) =>
-                  prev.map((c) => (c.id === saved.id ? saved : c))
+                  prev.map((c) => (c.id === saved.id ? saved : c)),
                 );
               setIsDialogOpen(false);
             }}
@@ -244,6 +244,10 @@ const CategoryCard = ({ category, onEdit, onDelete }) => {
         <h3 className="text-lg font-semibold  mb-2">
           {lang === "ar" ? category.name : category.name_en}
         </h3>
+        <p className="text-xs text-green-300 mb-2">
+          {lang === "ar" ? "خصم القسم" : "Category Discount"}:{" "}
+          {Number(category.discount_percentage || 0).toFixed(2)}%
+        </p>
       </div>
 
       <div className="flex justify-between items-center mt-auto pt-3 border-t border-white/10">
@@ -275,13 +279,23 @@ const CategoryCard = ({ category, onEdit, onDelete }) => {
 
 const CategoryForm = ({ isNew, category, menuId, onSuccess, onCancel }) => {
   const [name, setName] = useState(category?.name || "");
+  const [discountPercentage, setDiscountPercentage] = useState(
+    Number(category?.discount_percentage || 0),
+  );
   const { lang } = useLanguage();
 
   const handleSubmit = async () => {
     try {
       const res = isNew
-        ? await addNewCategory({ name, menu_id: menuId })
-        : await updateCategory(category.id, { name });
+        ? await addNewCategory({
+            name,
+            menu_id: menuId,
+            discount_percentage: Number(discountPercentage || 0),
+          })
+        : await updateCategory(category.id, {
+            name,
+            discount_percentage: Number(discountPercentage || 0),
+          });
 
       onSuccess(res);
       toast.success(
@@ -290,8 +304,8 @@ const CategoryForm = ({ isNew, category, menuId, onSuccess, onCancel }) => {
             ? "تم إضافة القسم"
             : "Category added"
           : lang === "ar"
-          ? "تم التحديث بنجاح"
-          : "Updated successfully"
+            ? "تم التحديث بنجاح"
+            : "Updated successfully",
       );
     } catch (err) {
       console.error(err);
@@ -306,6 +320,16 @@ const CategoryForm = ({ isNew, category, menuId, onSuccess, onCancel }) => {
         placeholder={lang === "ar" ? "اسم القسم" : "Category name"}
         value={name}
         onChange={(e) => setName(e.target.value)}
+      />
+      <input
+        className="w-full p-3 mt-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:ring-2 focus:ring-white/30"
+        placeholder={lang === "ar" ? "خصم القسم %" : "Category discount %"}
+        type="number"
+        min="0"
+        max="100"
+        step="0.01"
+        value={discountPercentage}
+        onChange={(e) => setDiscountPercentage(e.target.value)}
       />
 
       <DialogFooter className="mt-4">

@@ -17,6 +17,7 @@ const DeliveryCartDrawer = ({
   scheduledTime,
   orderType,
   cartTotal,
+  pricingSummary,
   setLocation,
   setPhone,
   setCustomerName,
@@ -31,13 +32,23 @@ const DeliveryCartDrawer = ({
 }) => {
   const [showCheckoutScreen, setShowCheckoutScreen] = useState(false);
   const [isResolvingGpsAddress, setIsResolvingGpsAddress] = useState(false);
-  const baseTotal =
-    cartTotal + (orderType === "delivery" ? 5 : 0) + cartTotal * 0.095;
+  const subtotalBeforeDiscount = Number(
+    pricingSummary?.subtotalBeforeDiscount ?? cartTotal,
+  );
+  const discountAmount = Number(pricingSummary?.discountAmount ?? 0);
+  const subtotalAfterDiscount = Number(
+    pricingSummary?.subtotalAfterDiscount ?? cartTotal,
+  );
+  const deliveryFee = Number(
+    pricingSummary?.deliveryFee ?? (orderType === "delivery" ? 5 : 0),
+  );
+  const taxAmount = Number(
+    pricingSummary?.taxAmount ?? (subtotalAfterDiscount + deliveryFee) * 0.095,
+  );
+  const baseTotal = subtotalAfterDiscount + deliveryFee + taxAmount;
   const safeTipPercentage = Number(tipPercentage || 0);
   const safeTips = (baseTotal * safeTipPercentage) / 100;
-  const deliveryFee = orderType === "delivery" ? 5 : 0;
-  const taxAmount = cartTotal * 0.095;
-  const finalTotal = cartTotal + deliveryFee + taxAmount + safeTips;
+  const finalTotal = baseTotal + safeTips;
   const tipOptions = [0, 5, 10, 15, 20];
 
   const isClosedWeekDay = (dateValue) => {
@@ -232,8 +243,16 @@ const DeliveryCartDrawer = ({
               <div className="mt-6 space-y-4 bg-slate-50 p-5 rounded-2xl">
                 <div className="space-y-1 text-sm text-slate-700 font-semibold">
                   <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>${cartTotal.toFixed(2)}</span>
+                    <span>Subtotal (Before Discount):</span>
+                    <span>${subtotalBeforeDiscount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-green-700">
+                    <span>Discount:</span>
+                    <span>- ${discountAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Subtotal (After Discount):</span>
+                    <span>${subtotalAfterDiscount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery:</span>
@@ -452,6 +471,24 @@ const DeliveryCartDrawer = ({
                     </div>
 
                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+                      <div className="flex justify-between text-sm text-slate-700">
+                        <span>Subtotal:</span>
+                        <span className="font-semibold text-slate-900">
+                          ${subtotalBeforeDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-green-700">
+                        <span>Discount:</span>
+                        <span className="font-semibold">
+                          - ${discountAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-slate-700">
+                        <span>Subtotal After Discount:</span>
+                        <span className="font-semibold text-orange-600">
+                          ${subtotalAfterDiscount.toFixed(2)}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-sm text-slate-700">
                         <span>Tip Amount:</span>
                         <span className="font-semibold text-orange-600">

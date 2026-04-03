@@ -5,7 +5,13 @@ import { X, Loader2, Shield, Lock, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const CloverPayment = ({ cartTotal, orderType, onPaymentSuccess, onClose }) => {
+const CloverPayment = ({
+  cartTotal,
+  orderType,
+  pricingSummary,
+  onPaymentSuccess,
+  onClose,
+}) => {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -20,9 +26,24 @@ const CloverPayment = ({ cartTotal, orderType, onPaymentSuccess, onClose }) => {
   const PUBLIC_TOKEN = process.env.NEXT_PUBLIC_CLOVER_PUBLIC_TOKEN_SANDBOX;
   const MERCHANT_ID = process.env.NEXT_PUBLIC_CLOVER_MERCHANT_ID_SANDBOX;
 
-  const deliveryFee = orderType === "delivery" ? 5 : 0;
-  const taxAmount = cartTotal * 0.095;
-  const totalAmount = (cartTotal + deliveryFee + taxAmount).toFixed(2);
+  const subtotalBeforeDiscount = Number(
+    pricingSummary?.subtotalBeforeDiscount ?? cartTotal,
+  );
+  const discountAmount = Number(pricingSummary?.discountAmount ?? 0);
+  const subtotalAfterDiscount = Number(
+    pricingSummary?.subtotalAfterDiscount ?? cartTotal,
+  );
+  const deliveryFee = Number(
+    pricingSummary?.deliveryFee ?? (orderType === "delivery" ? 5 : 0),
+  );
+  const taxAmount = Number(
+    pricingSummary?.taxAmount ?? (subtotalAfterDiscount + deliveryFee) * 0.095,
+  );
+  const tips = Number(pricingSummary?.tips ?? 0);
+  const totalAmount = (
+    pricingSummary?.finalTotal ??
+    subtotalAfterDiscount + deliveryFee + taxAmount + tips
+  ).toFixed(2);
 
   // 📦 Load Clover SDK - only once on mount
   useEffect(() => {
@@ -421,7 +442,15 @@ const CloverPayment = ({ cartTotal, orderType, onPaymentSuccess, onClose }) => {
               <div className="space-y-1 text-xs text-orange-700 border-t border-orange-300 pt-2">
                 <div className="flex justify-between">
                   <span>Items:</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>${subtotalBeforeDiscount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-green-700">
+                  <span>Discount:</span>
+                  <span>- ${discountAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>After Discount:</span>
+                  <span>${subtotalAfterDiscount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery:</span>
@@ -433,6 +462,12 @@ const CloverPayment = ({ cartTotal, orderType, onPaymentSuccess, onClose }) => {
                   <span>Tax (9.5%):</span>
                   <span className="font-semibold text-orange-700">
                     ${taxAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tip:</span>
+                  <span className="font-semibold text-orange-700">
+                    ${tips.toFixed(2)}
                   </span>
                 </div>
               </div>

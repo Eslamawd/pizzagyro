@@ -152,3 +152,41 @@ export const formatOrderItems = (cart) =>
       options: formattedOptions,
     };
   });
+
+export const calculateCartPricing = (cart, orderType, tipPercentage = 0) => {
+  const subtotalBeforeDiscount = cart.reduce(
+    (sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0),
+    0,
+  );
+
+  const discountAmount = cart.reduce((sum, item) => {
+    const discountPercentage = Number(item.discount_percentage || 0);
+    const lineSubtotal = Number(item.price || 0) * Number(item.qty || 0);
+    return sum + lineSubtotal * (discountPercentage / 100);
+  }, 0);
+
+  const subtotalAfterDiscount = Math.max(
+    0,
+    subtotalBeforeDiscount - discountAmount,
+  );
+  const deliveryFee = orderType === "delivery" ? 5 : 0;
+  const taxAmount = (subtotalAfterDiscount + deliveryFee) * 0.095;
+  const baseTotal = subtotalAfterDiscount + deliveryFee + taxAmount;
+  const tips = baseTotal * (Number(tipPercentage || 0) / 100);
+  const finalTotal = baseTotal + tips;
+  const effectiveDiscountPercentage =
+    subtotalBeforeDiscount > 0
+      ? (discountAmount / subtotalBeforeDiscount) * 100
+      : 0;
+
+  return {
+    subtotalBeforeDiscount,
+    discountAmount,
+    effectiveDiscountPercentage,
+    subtotalAfterDiscount,
+    deliveryFee,
+    taxAmount,
+    tips,
+    finalTotal,
+  };
+};

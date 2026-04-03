@@ -15,6 +15,7 @@ import Image from "next/image";
 function UpdateMenuForm({ onSuccess, onCancel, menu }) {
   const [formData, setFormData] = useState({
     name: menu?.name || "",
+    discount_percentage: Number(menu?.discount_percentage || 0),
     image: menu?.image || null,
   });
   const [preview, setPreview] = useState({
@@ -47,7 +48,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
       toast.error(
         lang === "ar"
           ? "الرجاء إدخال جميع الحقول المطلوبة"
-          : "Please fill all required fields"
+          : "Please fill all required fields",
       );
       return;
     }
@@ -56,6 +57,10 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
     try {
       const data = new FormData();
       data.append("name", formData.name);
+      data.append(
+        "discount_percentage",
+        Number(formData.discount_percentage || 0),
+      );
       if (formData.image) {
         data.append("image", formData.image);
       }
@@ -65,7 +70,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
         toast.success(
           lang === "ar"
             ? "تم تحديث القائمة بنجاح ✅"
-            : "Menu updated successfully ✅"
+            : "Menu updated successfully ✅",
         );
         onSuccess && onSuccess(res);
         onCancel && onCancel();
@@ -76,7 +81,7 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
       toast.error(
         lang === "ar"
           ? "حدث خطأ أثناء تحديث القائمة"
-          : "Failed to updated restaurant"
+          : "Failed to updated restaurant",
       );
     } finally {
       setIsLoading(false);
@@ -104,6 +109,21 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
             value={formData.name}
             onChange={handleInputChange}
             required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="discount_percentage">
+            {lang === "ar" ? "خصم القائمة (%)" : "Menu Discount (%)"}
+          </Label>
+          <Input
+            id="discount_percentage"
+            name="discount_percentage"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.discount_percentage}
+            onChange={handleInputChange}
           />
         </div>
       </div>
@@ -147,8 +167,8 @@ function UpdateMenuForm({ onSuccess, onCancel, menu }) {
               ? "جارٍ الحفظ..."
               : "Saving..."
             : lang === "ar"
-            ? "تحديث القائمة"
-            : "Updated Menu"}
+              ? "تحديث القائمة"
+              : "Updated Menu"}
         </Button>
       </div>
     </motion.form>

@@ -16,6 +16,7 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
   const [formData, setFormData] = useState({
     name: "",
     restaurant_id: id,
+    discount_percentage: 0,
     image: null,
   });
   const [preview, setPreview] = useState({
@@ -48,13 +49,17 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
       toast.error(
         lang === "ar"
           ? "الرجاء إدخال جميع الحقول المطلوبة"
-          : "Please fill all required fields"
+          : "Please fill all required fields",
       );
       return;
     }
     const data = new FormData();
     data.append("name", formData.name);
     data.append("restaurant_id", formData.restaurant_id);
+    data.append(
+      "discount_percentage",
+      Number(formData.discount_percentage || 0),
+    );
     if (formData.image) {
       data.append("image", formData.image);
     }
@@ -66,7 +71,7 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
         toast.success(
           lang === "ar"
             ? "تم إنشاء القائمة بنجاح ✅"
-            : "Menu created successfully ✅"
+            : "Menu created successfully ✅",
         );
         onSuccess && onSuccess(res);
         onCancel && onCancel();
@@ -77,7 +82,7 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
       toast.error(
         lang === "ar"
           ? "حدث خطأ أثناء إنشاء القائمة"
-          : "Failed to create restaurant"
+          : "Failed to create restaurant",
       );
     } finally {
       setIsLoading(false);
@@ -105,6 +110,21 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
             value={formData.name}
             onChange={handleInputChange}
             required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="discount_percentage">
+            {lang === "ar" ? "خصم القائمة (%)" : "Menu Discount (%)"}
+          </Label>
+          <Input
+            id="discount_percentage"
+            name="discount_percentage"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.discount_percentage}
+            onChange={handleInputChange}
           />
         </div>
         {/* Logo Upload */}
@@ -150,8 +170,8 @@ function CreateMenuForm({ onSuccess, onCancel, id }) {
               ? "جارٍ الحفظ..."
               : "Saving..."
             : lang === "ar"
-            ? "إنشاء القائمة"
-            : "Create Menu"}
+              ? "إنشاء القائمة"
+              : "Create Menu"}
         </Button>
       </div>
     </motion.form>

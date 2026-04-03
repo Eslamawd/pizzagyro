@@ -6,6 +6,7 @@ import { EMPTY_ITEM_SELECTION, OPTION_GROUP_CONFIG } from "./constants";
 import {
   buildOptionDetails,
   buildOptionsKey,
+  calculateCartPricing,
   calculateItemTotal,
 } from "./utils";
 import {
@@ -38,6 +39,7 @@ const useMenuShowDelivery = () => {
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const pricingSummary = calculateCartPricing(cart, orderType, tipPercentage);
 
   useEffect(() => {
     const fetchLocation = async (lat, lng) => {
@@ -212,6 +214,7 @@ const useMenuShowDelivery = () => {
           image: item.image,
           price: finalPrice,
           qty: 1,
+          discount_percentage: Number(item.discount_percentage || 0),
           comment: normalizedComment || null,
           options: optionDetails,
         },
@@ -243,6 +246,7 @@ const useMenuShowDelivery = () => {
     return canProceedDeliveryPayment({
       cart,
       cartTotal,
+      pricingSummary,
       orderType,
       location,
       phone,
@@ -259,6 +263,7 @@ const useMenuShowDelivery = () => {
       token,
       cart,
       cartTotal,
+      pricingSummary,
       orderType,
       location,
       menus,
@@ -286,6 +291,7 @@ const useMenuShowDelivery = () => {
   return {
     cart,
     cartTotal,
+    pricingSummary,
     location,
     menus,
     phone,

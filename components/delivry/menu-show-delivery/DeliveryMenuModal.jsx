@@ -46,7 +46,22 @@ const DeliveryMenuModal = ({
                     <motion.div
                       key={item.id}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => onSelectItem(item)}
+                      onClick={() =>
+                        onSelectItem({
+                          ...item,
+                          category_discount_percentage: Number(
+                            category.discount_percentage || 0,
+                          ),
+                          menu_discount_percentage: Number(
+                            selectedMenu.discount_percentage || 0,
+                          ),
+                          discount_percentage: Number(
+                            category.discount_percentage ||
+                              selectedMenu.discount_percentage ||
+                              0,
+                          ),
+                        })
+                      }
                       className="bg-white p-4 rounded-3xl flex gap-4 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     >
                       <img

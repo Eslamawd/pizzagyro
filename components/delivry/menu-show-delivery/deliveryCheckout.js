@@ -72,6 +72,7 @@ const isClosedWeekDay = (scheduledDate) => {
 export const canProceedDeliveryPayment = ({
   cart,
   cartTotal,
+  pricingSummary,
   orderType,
   location,
   phone,
@@ -81,12 +82,16 @@ export const canProceedDeliveryPayment = ({
   setShowCart,
   setShowLocModal,
 }) => {
+  const discountedSubtotal = Number(
+    pricingSummary?.subtotalAfterDiscount ?? cartTotal,
+  );
+
   if (cart.length === 0) {
     toast.error("Your cart is empty!");
     return false;
   }
 
-  if (orderType === "delivery" && cartTotal < 19) {
+  if (orderType === "delivery" && discountedSubtotal < 25) {
     toast.error(
       "Minimum order amount is $25. Please add more items to your cart.",
     );
@@ -147,6 +152,7 @@ export const submitDeliveryOrder = async ({
   token,
   cart,
   cartTotal,
+  pricingSummary,
   orderType,
   location,
   menus,
@@ -169,6 +175,10 @@ export const submitDeliveryOrder = async ({
   setPaymentToken,
   setIsProcessingOrder,
 }) => {
+  const discountedSubtotal = Number(
+    pricingSummary?.subtotalAfterDiscount ?? cartTotal,
+  );
+
   let validated = null;
 
   if (orderType === "delivery") {
@@ -187,7 +197,7 @@ export const submitDeliveryOrder = async ({
     if (!validated) return;
   }
 
-  if (orderType === "delivery" && cartTotal < 25) {
+  if (orderType === "delivery" && discountedSubtotal < 25) {
     toast.error(
       "Minimum order amount is $25. Please add more items to your cart.",
     );
@@ -243,9 +253,13 @@ export const submitDeliveryOrder = async ({
   setIsProcessingOrder(true);
 
   try {
-    const deliveryFee = orderType === "delivery" ? 5 : 0;
-    const taxAmount = Number(cartTotal) * 0.095;
-    const baseTotal = Number(cartTotal) + deliveryFee + taxAmount;
+    const deliveryFee = Number(
+      pricingSummary?.deliveryFee ?? (orderType === "delivery" ? 5 : 0),
+    );
+    const taxAmount = Number(
+      pricingSummary?.taxAmount ?? (discountedSubtotal + deliveryFee) * 0.095,
+    );
+    const baseTotal = discountedSubtotal + deliveryFee + taxAmount;
     const calculatedTips = (baseTotal * Number(tipPercentage || 0)) / 100;
 
     const orderData = {
@@ -261,7 +275,7 @@ export const submitDeliveryOrder = async ({
       scheduled_time: scheduledTime,
       scheduled_for: `${scheduledDate} ${scheduledTime}:00`,
       items: formatOrderItems(cart),
-      total_price: (Number(cartTotal) + Number(calculatedTips || 0)).toFixed(2),
+      total_price: (baseTotal + Number(calculatedTips || 0)).toFixed(2),
       payment_token: token,
       order_type: orderType,
     };

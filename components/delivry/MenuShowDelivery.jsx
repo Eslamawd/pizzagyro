@@ -19,6 +19,7 @@ const MenuShowDelivery = () => {
   const {
     cart,
     cartTotal,
+    pricingSummary,
     location,
     menus,
     phone,
@@ -118,6 +119,7 @@ const MenuShowDelivery = () => {
         scheduledTime={scheduledTime}
         orderType={orderType}
         cartTotal={cartTotal}
+        pricingSummary={pricingSummary}
         setLocation={setLocation}
         setPhone={setPhone}
         setCustomerName={setCustomerName}
@@ -144,15 +146,16 @@ const MenuShowDelivery = () => {
 
       <DeliveryFloatingCartButton
         cartCount={cart.length}
-        cartTotal={cartTotal}
+        cartTotal={pricingSummary.subtotalAfterDiscount}
         onOpenCart={() => setShowCart(true)}
       />
 
       <AnimatePresence>
         {showPaymentModal && (
           <CloverPayment
-            cartTotal={cartTotal}
+            cartTotal={pricingSummary.subtotalAfterDiscount}
             orderType={orderType}
+            pricingSummary={pricingSummary}
             isProcessingOrder={isProcessingOrder}
             paymentToken={paymentToken}
             onPaymentSuccess={(token) => {
