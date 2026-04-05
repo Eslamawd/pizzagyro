@@ -252,6 +252,8 @@ export const submitDeliveryOrder = async ({
     const baseTotal = discountedSubtotal + deliveryFee + taxAmount;
     const calculatedTips = (baseTotal * Number(tipPercentage || 0)) / 100;
 
+    const hasSchedule = Boolean(scheduledDate && scheduledTime);
+
     const orderData = {
       restaurant_id: menus[0]?.restaurant_id || 1,
       address: orderType === "delivery" ? location.address : "Pickup",
@@ -261,9 +263,11 @@ export const submitDeliveryOrder = async ({
       customer_name: customerName.trim(),
       tip_percentage: Number(tipPercentage || 0),
       tips: Number(calculatedTips || 0).toFixed(2),
-      scheduled_date: scheduledDate,
-      scheduled_time: scheduledTime,
-      scheduled_for: `${scheduledDate} ${scheduledTime}:00`,
+      scheduled_date: scheduledDate || null,
+      scheduled_time: scheduledTime || null,
+      scheduled_for: hasSchedule
+        ? `${scheduledDate} ${scheduledTime}:00`
+        : null,
       items: formatOrderItems(cart),
       total_price: (baseTotal + Number(calculatedTips || 0)).toFixed(2),
       payment_token: token,
