@@ -160,6 +160,7 @@ export const submitDeliveryOrder = async ({
   addNewOrderDelivery,
   setShowLocModal,
   setShowPaymentModal,
+  setShowCart,
   setCart,
   setSelectedItem,
   setSelectedOptions,
