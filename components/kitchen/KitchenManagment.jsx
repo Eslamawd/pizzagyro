@@ -12,6 +12,7 @@ import {
   subscribeFirebaseForegroundMessages,
 } from "@/lib/firebaseWebPush";
 import { toast } from "sonner";
+import { MapPin } from "lucide-react";
 
 function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
   const [orders, setOrders] = useState([]);
@@ -406,6 +407,25 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
                 <p>
                   <strong>Total:</strong> {order.total_price} $
                 </p>
+                {order?.phone && (
+                  <a
+                    href={`tel:${order.phone}`}
+                    className="text-lg underline hover:text-orange-50"
+                  >
+                    <strong>Phone:</strong> 📞 {order.phone}
+                  </a>
+                )}
+                {order.latitude && order.longitude && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-orange-100 hover:underline"
+                  >
+                    <strong>Map:</strong>
+                    <MapPin className="inline-block text-orange-100 mr-1 mb-1" />
+                  </a>
+                )}
                 <p className="text-sm font-semibold text-yellow-400 mb-2">
                   Items List:
                 </p>
