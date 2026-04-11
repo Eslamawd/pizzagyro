@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,9 @@ const DeliveryCartDrawer = ({
 }) => {
   const [showCheckoutScreen, setShowCheckoutScreen] = useState(false);
   const [isResolvingGpsAddress, setIsResolvingGpsAddress] = useState(false);
+  const [addressSearchResults, setAddressSearchResults] = useState([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const addressSearchTimeout = useRef(null);
   const subtotalBeforeDiscount = Number(
     pricingSummary?.subtotalBeforeDiscount ?? cartTotal,
   );
@@ -75,6 +78,14 @@ const DeliveryCartDrawer = ({
 
   const selectedDayBusinessHours = getBusinessHoursForDate(scheduledDate);
 
+  useEffect(() => {
+    return () => {
+      if (addressSearchTimeout.current) {
+        clearTimeout(addressSearchTimeout.current);
+      }
+    };
+  }, []);
+
   const handleCloseDrawer = () => {
     setShowCheckoutScreen(false);
     onClose();
@@ -102,11 +113,58 @@ const DeliveryCartDrawer = ({
 
   const handleAddressChange = (event) => {
     const nextAddress = event.target.value;
+
     setLocation((prev) => ({
       ...prev,
       address: nextAddress,
       isSet: true,
     }));
+
+    if (addressSearchTimeout.current) {
+      clearTimeout(addressSearchTimeout.current);
+    }
+
+    if (!nextAddress.trim()) {
+      setAddressSearchResults([]);
+      setIsSearchingAddress(false);
+      return;
+    }
+
+    setIsSearchingAddress(true);
+    addressSearchTimeout.current = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/geocode/search?q=${encodeURIComponent(nextAddress)}&language=en&limit=5`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to search address");
+        }
+
+        const data = await response.json();
+        setAddressSearchResults(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to search address:", error);
+        setAddressSearchResults([]);
+      } finally {
+        setIsSearchingAddress(false);
+      }
+    }, 300);
+  };
+
+  const handleSelectAddressResult = (result) => {
+    const lat = Number.parseFloat(result.lat);
+    const lng = Number.parseFloat(result.lon);
+
+    setLocation((prev) => ({
+      ...prev,
+      lat: Number.isNaN(lat) ? prev?.lat : lat,
+      lng: Number.isNaN(lng) ? prev?.lng : lng,
+      address: result.display_name || result.name || prev?.address || "",
+      isSet: true,
+    }));
+    setAddressSearchResults([]);
+    setIsSearchingAddress(false);
   };
 
   const handleUseGpsAddress = async () => {
@@ -384,7 +442,7 @@ const DeliveryCartDrawer = ({
                     </div>
 
                     {orderType === "delivery" && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 relative">
                         <span className="text-sm text-slate-600">Address:</span>
                         <div className="flex items-center gap-2">
                           <input
@@ -405,6 +463,26 @@ const DeliveryCartDrawer = ({
                             {isResolvingGpsAddress ? "Loading..." : "Use GPS"}
                           </span>
                         </div>
+                        {addressSearchResults.length > 0 && (
+                          <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                            {addressSearchResults.map((result) => (
+                              <li
+                                key={result.place_id}
+                                className="cursor-pointer px-3 py-2 text-sm text-slate-700 hover:bg-orange-50"
+                                onClick={() =>
+                                  handleSelectAddressResult(result)
+                                }
+                              >
+                                {result.display_name}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {isSearchingAddress && (
+                          <p className="text-xs text-slate-500">
+                            Searching places...
+                          </p>
+                        )}
                         <p className="text-xs text-slate-500">
                           You can type address manually. GPS location stays
                           enabled.

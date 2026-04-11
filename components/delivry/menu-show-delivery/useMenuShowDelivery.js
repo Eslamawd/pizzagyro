@@ -31,7 +31,7 @@ const useMenuShowDelivery = () => {
   const [tipPercentage, setTipPercentage] = useState(0);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
-  const [orderType, setOrderType] = useState("delivery");
+  const [orderType, setOrderType] = useState("pickup");
   const [showLocModal, setShowLocModal] = useState(false);
   const [menus, setMenus] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);

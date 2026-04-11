@@ -110,7 +110,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
 
-        let address = "موقعك الحالي";
+        let address = "Your Current Location";
         try {
           const res = await fetch(
             `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
