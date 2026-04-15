@@ -23,7 +23,7 @@ const DeliveryMenuModal = ({
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
-          className="fixed inset-0 z-[60] bg-white/80 overflow-y-auto"
+          className="fixed inset-0 z-[50] bg-white/80 overflow-y-auto"
         >
           <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-md z-10">
             <Button
