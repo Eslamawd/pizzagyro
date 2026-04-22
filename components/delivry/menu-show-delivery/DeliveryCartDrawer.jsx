@@ -464,9 +464,13 @@ const DeliveryCartDrawer = ({
                           </span>
                         </div>
                         {addressSearchResults.length > 0 && (
-                          <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                          <ul
+                            dir="ltr"
+                            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg"
+                          >
                             {addressSearchResults.map((result) => (
                               <li
+                                dir="ltr"
                                 key={result.place_id}
                                 className="cursor-pointer px-3 py-2 text-sm text-slate-700 hover:bg-orange-50"
                                 onClick={() =>
