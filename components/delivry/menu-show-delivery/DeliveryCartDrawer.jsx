@@ -62,18 +62,33 @@ const DeliveryCartDrawer = ({
     return CLOSED_WEEK_DAYS.includes(date.getDay());
   };
 
+  const formatTime12 = (time24) => {
+    const [hours, minutes] = time24.split(":");
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12; // يحول 0 لـ 12 و 13 لـ 1
+    return `${h12}:${minutes} ${ampm}`;
+  };
+
   const getBusinessHoursForDate = (dateValue) => {
-    if (!dateValue) {
-      return { minTime: "10:00", maxTime: "22:00", label: "10:00 - 22:00" };
+    // القيم الافتراضية بنظام 24 ساعة للـ HTML Input
+    let config = { minTime: "10:00", maxTime: "22:00" };
+
+    if (dateValue) {
+      const selectedDate = new Date(`${dateValue}T00:00:00`);
+      const day = selectedDate.getDay();
+      const isWeekendWindow = day === 5 || day === 6; // Friday, Saturday
+
+      if (isWeekendWindow) {
+        config = { minTime: "10:00", maxTime: "23:30" };
+      }
     }
 
-    const selectedDate = new Date(`${dateValue}T00:00:00`);
-    const day = selectedDate.getDay();
-    const isWeekendWindow = day === 5 || day === 6; // Friday, Saturday
-
-    return isWeekendWindow
-      ? { minTime: "10:00", maxTime: "23:30", label: "10:00 - 23:30" }
-      : { minTime: "10:00", maxTime: "22:00", label: "10:00 - 22:00" };
+    // هنا بنعمل الـ Label بشكل ديناميكي بنظام 12 ساعة
+    return {
+      ...config,
+      label: `${formatTime12(config.minTime)} - ${formatTime12(config.maxTime)}`,
+    };
   };
 
   const selectedDayBusinessHours = getBusinessHoursForDate(scheduledDate);
