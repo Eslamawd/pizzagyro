@@ -347,12 +347,14 @@ const DeliveryCartDrawer = ({
           <AnimatePresence>
             {showCheckoutScreen && cart.length > 0 && (
               <motion.div
+                dir="ltr"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[90] bg-black/55 backdrop-blur-sm flex items-center justify-center p-4"
               >
                 <motion.div
+                  dir="ltr"
                   initial={{ opacity: 0, y: 30, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.96 }}
@@ -363,6 +365,7 @@ const DeliveryCartDrawer = ({
                       Checkout
                     </h3>
                     <span
+                      dir="ltr"
                       variant="ghost"
                       onClick={() => setShowCheckoutScreen(false)}
                       className="rounded-full bg-slate-100"
@@ -419,6 +422,7 @@ const DeliveryCartDrawer = ({
                       <div className="space-y-1">
                         <span className="text-sm text-slate-600">Phone:</span>
                         <input
+                          dir="ltr"
                           type="tel"
                           placeholder="Enter your phone number"
                           className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -430,6 +434,7 @@ const DeliveryCartDrawer = ({
                       <div className="space-y-1">
                         <span className="text-sm text-slate-600">Name:</span>
                         <input
+                          dir="ltr"
                           type="text"
                           placeholder="Customer name"
                           className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -446,6 +451,7 @@ const DeliveryCartDrawer = ({
                         <span className="text-sm text-slate-600">Address:</span>
                         <div className="flex items-center gap-2">
                           <input
+                            dir="ltr"
                             type="text"
                             placeholder="Enter delivery address manually"
                             className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
