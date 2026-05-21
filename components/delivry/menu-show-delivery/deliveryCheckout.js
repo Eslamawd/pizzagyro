@@ -89,9 +89,9 @@ export const canProceedDeliveryPayment = ({
     return false;
   }
 
-  if (orderType === "delivery" && discountedSubtotal < 25) {
+  if (orderType === "delivery" && discountedSubtotal < 20) {
     toast.error(
-      "Minimum order amount is $25. Please add more items to your cart.",
+      "Minimum order amount is $20. Please add more items to your cart.",
     );
     return false;
   }
@@ -191,9 +191,9 @@ export const submitDeliveryOrder = async ({
     if (!validated) return;
   }
 
-  if (orderType === "delivery" && discountedSubtotal < 25) {
+  if (orderType === "delivery" && discountedSubtotal < 20) {
     toast.error(
-      "Minimum order amount is $25. Please add more items to your cart.",
+      "Minimum order amount is $20. Please add more items to your cart.",
     );
     return;
   }
