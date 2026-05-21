@@ -80,7 +80,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html dir="rtl" lang="en">
+    <html dir="ltr" lang="en">
       <body
         className={`${poppins.variable} ${tajawal.variable} antialiased font-tajawal bg-[#FAFAFA]`}
       >

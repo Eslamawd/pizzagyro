@@ -2,26 +2,20 @@
 
 import { useEffect, useState, useRef } from "react";
 import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+  GoogleMap,
+  useJsApiLoader,
+  MarkerF,
+  Autocomplete,
+} from "@react-google-maps/api";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "lucide-react";
 import { toast } from "sonner";
 
-/* FIX MARKER */
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+// تعريف الاستايل وحجم حاوية الخريطة
+const containerStyle = { width: "100%", height: "300px" };
+
+// لازم نعرف المكتبات برة الـ Component عشان نمنع الـ Re-render المتكرر للإسكربت
+const GOOGLE_MAPS_LIBRARIES = ["places"];
 
 export default function LocationPicker({ location, setLocation, onClose }) {
   const [coords, setCoords] = useState({
@@ -30,9 +24,17 @@ export default function LocationPicker({ location, setLocation, onClose }) {
   });
 
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const searchTimeout = useRef(null);
+
+  // Refs للتحكم في الخريطة والـ Autocomplete بتاع جوجل
+  const mapRef = useRef(null);
+  const autocompleteRef = useRef(null);
+
+  /* LOAD GOOGLE MAPS SCRIPT WITH ENV TOKEN */
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, // هنا بنجيب التوكن من الـ Environment
+    libraries: GOOGLE_MAPS_LIBRARIES,
+  });
 
   /* LOAD FROM STATE / STORAGE */
   useEffect(() => {
@@ -52,24 +54,18 @@ export default function LocationPicker({ location, setLocation, onClose }) {
     }
   }, [location?.lat, location?.lng]);
 
-  /* REVERSE GEOCODE */
-  const resolveAddress = async (lat, lon) => {
-    try {
-      const res = await fetch(
-        `/api/geocode/reverse?lat=${lat}&lon=${lon}&language=en`,
-      );
-      const a = (await res.json()).address || {};
-      return (
-        a.neighbourhood ||
-        a.suburb ||
-        a.city_district ||
-        a.town ||
-        a.city ||
-        "Your Current Location"
-      );
-    } catch {
-      return "Your Current Location";
-    }
+  /* REVERSE GEOCODE WITH GOOGLE NATIVE GEOCODER */
+  const resolveAddress = (lat, lng) => {
+    return new Promise((resolve) => {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          resolve(results[0].formatted_address);
+        } else {
+          resolve("Your Current Location");
+        }
+      });
+    });
   };
 
   /* UPDATE LOCATION STATE */
@@ -79,6 +75,11 @@ export default function LocationPicker({ location, setLocation, onClose }) {
     setCoords({ lat, lng });
     setLocation(newLoc);
     toast.success(`Updated location: ${address}`);
+
+    // تحريك الكاميرا بسلاسة للمكان المختار
+    if (mapRef.current) {
+      mapRef.current.panTo({ lat, lng });
+    }
   };
 
   /* CONFIRM → API */
@@ -99,7 +100,7 @@ export default function LocationPicker({ location, setLocation, onClose }) {
   /* AUTO GPS */
   const handleAutoLocate = (initial = false) => {
     if (!navigator.geolocation) {
-      toast.error(" Geolocation is not supported by your browser");
+      toast.error("Geolocation is not supported by your browser");
       return;
     }
 
@@ -109,32 +110,19 @@ export default function LocationPicker({ location, setLocation, onClose }) {
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-
-        let address = "Your Current Location";
-        try {
-          const res = await fetch(
-            `/api/geocode/reverse?lat=${lat}&lon=${lng}&language=en`,
-          );
-          const data = await res.json();
-          const a = data.address || {};
-          address =
-            a.neighbourhood ||
-            a.suburb ||
-            a.city_district ||
-            a.town ||
-            a.city ||
-            "Your Current Location";
-        } catch {}
-
+        const address = await resolveAddress(lat, lng);
         const newLoc = { lat, lng, address, isSet: true };
 
-        if (initial) {
-          setLocation(newLoc);
-          setCoords({ lat, lng });
-        } else {
-          setCoords({ lat, lng });
-          setLocation(newLoc);
+        setCoords({ lat, lng });
+        setLocation(newLoc);
+
+        if (!initial) {
           toast.success(`Updated location: ${address}`);
+        }
+
+        if (mapRef.current) {
+          mapRef.current.panTo({ lat, lng });
+          mapRef.current.setZoom(15);
         }
 
         setLoading(false);
@@ -147,82 +135,59 @@ export default function LocationPicker({ location, setLocation, onClose }) {
     );
   };
 
-  /* MAP CLICK */
-  const MapEvents = () => {
-    useMapEvents({
-      click(e) {
-        updateLocation(e.latlng.lat, e.latlng.lng);
-      },
-    });
-    return null;
-  };
+  /* GOOGLE AUTOCOMPLETE PLACE SELECTION */
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
 
-  const RecenterMap = ({ lat, lng }) => {
-    const map = useMap();
-
-    useEffect(() => {
-      if (lat != null && lng != null) {
-        map.setView([lat, lng], map.getZoom(), { animate: true });
-      }
-    }, [lat, lng, map]);
-
-    return null;
-  };
-
-  /* SEARCH LOCATIONS */
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-    searchTimeout.current = setTimeout(async () => {
-      if (!query) {
-        setSearchResults([]);
+      if (!place.geometry || !place.geometry.location) {
+        toast.error("Please select a valid location from the list");
         return;
       }
-      try {
-        const res = await fetch(
-          `/api/geocode/search?q=${encodeURIComponent(query)}&language=en&limit=5`,
-        );
-        const data = await res.json();
-        setSearchResults(data);
-      } catch {
-        setSearchResults([]);
+
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      const address = place.formatted_address || "Selected Location";
+
+      const newLoc = { lat, lng, address, isSet: true };
+      setCoords({ lat, lng });
+      setLocation(newLoc);
+
+      if (mapRef.current) {
+        mapRef.current.panTo({ lat, lng });
+        mapRef.current.setZoom(16);
       }
-    }, 300); // ← debounce
+      toast.success(`Selected: ${address}`);
+    }
   };
 
-  const selectSearchResult = (result) => {
-    const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
-    updateLocation(lat, lng);
-    setSearchQuery("");
-    setSearchResults([]);
-  };
+  if (loadError)
+    return (
+      <div className="p-3 text-red-500">
+        Error loading maps. Check your API Key.
+      </div>
+    );
+  if (!isLoaded)
+    return (
+      <div className="h-[300px] bg-slate-50 flex items-center justify-center rounded-2xl border text-sm text-muted-foreground animate-pulse">
+        Loading Google Maps...
+      </div>
+    );
 
   return (
     <div className="space-y-3">
-      {/* SEARCH BOX */}
+      {/* SEARCH BOX WITH GOOGLE AUTOCOMPLETE */}
       <div className="relative">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search your location..."
-          className="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-        />
-        {searchResults.length > 0 && (
-          <ul className="absolute z-999 w-full bg-white border border-gray-300 rounded-xl max-h-60 overflow-auto mt-1">
-            {searchResults.map((r) => (
-              <li
-                key={r.place_id}
-                onClick={() => selectSearchResult(r)}
-                className="p-2 hover:bg-orange-100 cursor-pointer"
-              >
-                {r.display_name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <Autocomplete
+          onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+          onPlaceChanged={onPlaceChanged}
+        >
+          <input
+            type="text"
+            placeholder="Search your location..."
+            className="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </Autocomplete>
       </div>
 
       {/* GPS BUTTON */}
@@ -231,32 +196,32 @@ export default function LocationPicker({ location, setLocation, onClose }) {
         disabled={loading}
         className="w-full py-4 rounded-2xl bg-slate-900 text-white gap-2 flex items-center justify-center"
       >
-        <Navigation />
+        <Navigation className="w-4 h-4" />
         {loading ? "Locating..." : "Use my location"}
       </Button>
 
       {/* MAP */}
       {coords && (
-        <div className="h-[300px] rounded-2xl overflow-hidden">
-          <MapContainer
-            center={[coords.lat, coords.lng]}
+        <div className="h-[300px] rounded-2xl overflow-hidden border border-gray-100 shadow-inner">
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={coords}
             zoom={15}
-            className="h-full w-full"
+            onLoad={(map) => (mapRef.current = map)}
+            onClick={(e) => updateLocation(e.latLng.lat(), e.latLng.lng())}
+            options={{
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: false,
+            }}
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <RecenterMap lat={coords.lat} lng={coords.lng} />
-            <Marker
-              position={[coords.lat, coords.lng]}
+            {/* MarkerF لضمان ثبات الدبوس وعدم اختفائه في الـ re-render بتاع React 18 / Next.js */}
+            <MarkerF
+              position={coords}
               draggable
-              eventHandlers={{
-                dragend: (e) => {
-                  const p = e.target.getLatLng();
-                  updateLocation(p.lat, p.lng);
-                },
-              }}
+              onDragEnd={(e) => updateLocation(e.latLng.lat(), e.latLng.lng())}
             />
-            <MapEvents />
-          </MapContainer>
+          </GoogleMap>
         </div>
       )}
 

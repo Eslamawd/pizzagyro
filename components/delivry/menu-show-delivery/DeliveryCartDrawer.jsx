@@ -465,53 +465,16 @@ const DeliveryCartDrawer = ({
                       <div className="space-y-1 relative">
                         <span className="text-sm text-slate-600">Address:</span>
                         <div className="flex items-center gap-2">
-                          <input
+                          <span
                             dir="ltr"
                             type="text"
-                            placeholder="Enter delivery address manually"
-                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            value={location?.address || ""}
-                            onChange={handleAddressChange}
-                          />
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown
-                            onClick={handleUseGpsAddress}
-                            disabled={isResolvingGpsAddress}
-                            className="h-10 px-3 text-xs whitespace-nowrap"
+                            className="w-full px-3 py-2  rounded-lg text-sm focus:outline-none focus:ring-2 "
+                            value={location?.address || "Your location"}
                           >
-                            {isResolvingGpsAddress ? "Loading..." : "Use GPS"}
+                            {location?.address || "Your location"}
                           </span>
                         </div>
-                        {addressSearchResults.length > 0 && (
-                          <ul
-                            dir="ltr"
-                            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg"
-                          >
-                            {addressSearchResults.map((result) => (
-                              <li
-                                dir="ltr"
-                                key={result.place_id}
-                                className="cursor-pointer px-3 py-2 text-sm text-slate-700 hover:bg-orange-50"
-                                onClick={() =>
-                                  handleSelectAddressResult(result)
-                                }
-                              >
-                                {result.display_name}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {isSearchingAddress && (
-                          <p className="text-xs text-slate-500">
-                            Searching places...
-                          </p>
-                        )}
-                        <p className="text-xs text-slate-500">
-                          You can type address manually. GPS location stays
-                          enabled.
-                        </p>
+
                         <Button
                           type="button"
                           variant="outline"
