@@ -11,6 +11,7 @@ import {
   normalizeCoordinate,
   normalizeUSLongitude,
   normalizeUSPhone,
+  updatedDelivery,
 } from "./utils";
 
 const getValidatedLocation = ({ location, setShowLocModal }) => {
@@ -244,9 +245,18 @@ export const submitDeliveryOrder = async ({
   setIsProcessingOrder(true);
 
   try {
-    const deliveryFee = Number(
-      pricingSummary?.deliveryFee ?? (orderType === "delivery" ? 5 : 0),
-    );
+    let deliveryFee = 0;
+    if (orderType === "delivery") {
+      const feeCalculated =
+        pricingSummary?.deliveryFee ?? updatedDelivery(distance);
+
+      if (typeof feeCalculated === "object" && feeCalculated?.error) {
+        toast.error(feeCalculated.error);
+        setIsProcessingOrder(false);
+        return;
+      }
+      deliveryFee = Number(feeCalculated);
+    }
     const taxAmount = Number(
       pricingSummary?.taxAmount ?? (discountedSubtotal + deliveryFee) * 0.095,
     );

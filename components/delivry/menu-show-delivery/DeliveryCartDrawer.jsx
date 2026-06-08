@@ -43,6 +43,8 @@ const DeliveryCartDrawer = ({
   const subtotalAfterDiscount = Number(
     pricingSummary?.subtotalAfterDiscount ?? cartTotal,
   );
+  const deliveryDistance = pricingSummary?.deliveryDistance ?? null;
+  const deliveryFeeError = pricingSummary?.deliveryFeeError ?? null;
   const deliveryFee = Number(
     pricingSummary?.deliveryFee ?? (orderType === "delivery" ? 5 : 0),
   );
@@ -328,10 +330,32 @@ const DeliveryCartDrawer = ({
                     <span>Subtotal (After Discount):</span>
                     <span>${subtotalAfterDiscount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Delivery:</span>
-                    <span>${deliveryFee.toFixed(2)}</span>
-                  </div>
+                  {orderType === "delivery" && (
+                    <>
+                      <div className="flex justify-between text-sm text-slate-500">
+                        <span>Delivery distance:</span>
+                        <span>
+                          {deliveryDistance !== null
+                            ? `${deliveryDistance.toFixed(1)} mi`
+                            : "Not set"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delivery:</span>
+                        <span>
+                          {deliveryFeeError
+                            ? deliveryFeeError
+                            : `$${deliveryFee.toFixed(2)}`}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {orderType !== "delivery" && (
+                    <div className="flex justify-between">
+                      <span>Delivery:</span>
+                      <span>${deliveryFee.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>TAX:</span>
                     <span>${taxAmount.toFixed(2)}</span>
@@ -564,6 +588,26 @@ const DeliveryCartDrawer = ({
                           ${subtotalAfterDiscount.toFixed(2)}
                         </span>
                       </div>
+                      {orderType === "delivery" && (
+                        <>
+                          <div className="flex justify-between text-sm text-slate-500">
+                            <span>Delivery distance:</span>
+                            <span>
+                              {deliveryDistance !== null
+                                ? `${deliveryDistance.toFixed(1)} mi`
+                                : "Not set"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm text-slate-700">
+                            <span>Delivery:</span>
+                            <span className="font-semibold text-orange-600">
+                              {deliveryFeeError
+                                ? deliveryFeeError
+                                : `$${deliveryFee.toFixed(2)}`}
+                            </span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex justify-between text-sm text-slate-700">
                         <span>Tip Amount:</span>
                         <span className="font-semibold text-orange-600">
