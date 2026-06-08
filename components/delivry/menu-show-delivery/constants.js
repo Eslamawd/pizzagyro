@@ -9,7 +9,7 @@ export const OPTION_GROUP_CONFIG = {
   other: { type: "multiple", required: false, max: 5 },
 };
 
-export const DELIVERY_RADIUS_MILES = 5;
+export const DELIVERY_RADIUS_MILES = 8;
 
 // 0=Sunday, 1=Monday, ... 6=Saturday
 // Keep empty for now. Add days later if needed, e.g. [1] for Monday.

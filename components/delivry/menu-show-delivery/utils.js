@@ -24,6 +24,27 @@ export const isValidUSPhone = (value) => {
   const normalized = normalizeUSPhone(value);
   return /^[2-9]\d{2}[2-9]\d{6}$/.test(normalized);
 };
+export const updatedDelivery = (distance) => {
+  try {
+    const numericDistance = Number(distance);
+    if (!Number.isFinite(numericDistance) || numericDistance < 0) {
+      return { error: "Invalid distance for delivery fee calculation." };
+    }
+
+    if (numericDistance <= 4) {
+      return "5.00";
+    }
+
+    if (numericDistance <= 8) {
+      return (numericDistance + 1.5).toFixed(2);
+    }
+
+    return { error: "Delivery Unavailable: distances over 8 miles" };
+  } catch (error) {
+    console.error("Error calculating delivery fee:", error);
+    return { error: "Failed to calculate delivery fee" };
+  }
+};
 
 export const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const earthRadiusMiles = 3958.8;
@@ -153,7 +174,12 @@ export const formatOrderItems = (cart) =>
     };
   });
 
-export const calculateCartPricing = (cart, orderType, tipPercentage = 0) => {
+export const calculateCartPricing = (
+  cart,
+  orderType,
+  tipPercentage = 0,
+  distance = null,
+) => {
   const subtotalBeforeDiscount = cart.reduce(
     (sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0),
     0,
@@ -169,7 +195,18 @@ export const calculateCartPricing = (cart, orderType, tipPercentage = 0) => {
     0,
     subtotalBeforeDiscount - discountAmount,
   );
-  const deliveryFee = orderType === "delivery" ? 5 : 0;
+
+  const feeCalculated =
+    orderType === "delivery" ? updatedDelivery(distance ?? 0) : 0;
+  const deliveryFee =
+    orderType === "delivery" && typeof feeCalculated === "string"
+      ? Number(feeCalculated)
+      : 0;
+  const deliveryFeeError =
+    orderType === "delivery" && typeof feeCalculated === "object"
+      ? feeCalculated.error
+      : null;
+
   const taxAmount = (subtotalAfterDiscount + deliveryFee) * 0.095;
   const baseTotal = subtotalAfterDiscount + deliveryFee + taxAmount;
   const tips = baseTotal * (Number(tipPercentage || 0) / 100);
@@ -184,7 +221,9 @@ export const calculateCartPricing = (cart, orderType, tipPercentage = 0) => {
     discountAmount,
     effectiveDiscountPercentage,
     subtotalAfterDiscount,
+    deliveryDistance: distance,
     deliveryFee,
+    deliveryFeeError,
     taxAmount,
     tips,
     finalTotal,

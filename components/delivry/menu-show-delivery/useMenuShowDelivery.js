@@ -2,12 +2,19 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMenus } from "@/lib/menuApi";
 import { addNewOrderDelivery } from "@/lib/orderApi";
-import { EMPTY_ITEM_SELECTION, OPTION_GROUP_CONFIG } from "./constants";
+import {
+  EMPTY_ITEM_SELECTION,
+  OPTION_GROUP_CONFIG,
+  MANUAL_RESTAURANT_LOCATION,
+} from "./constants";
 import {
   buildOptionDetails,
   buildOptionsKey,
   calculateCartPricing,
+  calculateDistance,
   calculateItemTotal,
+  normalizeCoordinate,
+  normalizeUSLongitude,
 } from "./utils";
 import {
   canProceedDeliveryPayment,
@@ -39,7 +46,35 @@ const useMenuShowDelivery = () => {
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const pricingSummary = calculateCartPricing(cart, orderType, tipPercentage);
+
+  const restaurantCoordinates = {
+    lat: normalizeCoordinate(MANUAL_RESTAURANT_LOCATION.lat),
+    lng: normalizeUSLongitude(MANUAL_RESTAURANT_LOCATION.lng),
+  };
+
+  const customerLat = normalizeCoordinate(location.lat);
+  const customerLng = normalizeUSLongitude(location.lng);
+
+  const deliveryDistance =
+    orderType === "delivery" &&
+    customerLat !== null &&
+    customerLng !== null &&
+    restaurantCoordinates.lat !== null &&
+    restaurantCoordinates.lng !== null
+      ? calculateDistance(
+          restaurantCoordinates.lat,
+          restaurantCoordinates.lng,
+          customerLat,
+          customerLng,
+        )
+      : null;
+
+  const pricingSummary = calculateCartPricing(
+    cart,
+    orderType,
+    tipPercentage,
+    deliveryDistance,
+  );
 
   useEffect(() => {
     const getMenusApi = async () => {

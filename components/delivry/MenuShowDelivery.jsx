@@ -141,14 +141,22 @@ const MenuShowDelivery = () => {
 
       <DeliveryFloatingCartButton
         cartCount={cart.length}
-        cartTotal={pricingSummary.subtotalAfterDiscount}
+        cartTotal={Number(
+          pricingSummary.finalTotal ??
+            pricingSummary.subtotalAfterDiscount ??
+            0,
+        )}
         onOpenCart={() => setShowCart(true)}
       />
 
       <AnimatePresence>
         {showPaymentModal && (
           <CloverPayment
-            cartTotal={pricingSummary.subtotalAfterDiscount}
+            cartTotal={Number(
+              pricingSummary.finalTotal ??
+                pricingSummary.subtotalAfterDiscount ??
+                0,
+            )}
             orderType={orderType}
             pricingSummary={pricingSummary}
             isProcessingOrder={isProcessingOrder}
