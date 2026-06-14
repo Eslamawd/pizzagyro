@@ -31,12 +31,12 @@ export const updatedDelivery = (distance) => {
       return { error: "Invalid distance for delivery fee calculation." };
     }
 
-    if (numericDistance <= 4) {
+    if (numericDistance <= 2) {
       return "5.00";
     }
 
     if (numericDistance <= 8) {
-      return (numericDistance + 1.5).toFixed(2);
+      return (numericDistance * 3.3).toFixed(2);
     }
 
     return { error: "Delivery Unavailable: distances over 8 miles" };
