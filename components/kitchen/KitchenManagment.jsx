@@ -160,6 +160,7 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
 
   // ✅ إشعارات + صوت + نطق
   // ✅ إشعارات + صوت + نطق (مُحسَّن لـ iOS/Safari)
+
   const handleNotifyNewOrder = (order) => {
     // رنين مستمر لا يتوقف إلا بالزر.
     startPersistentAlert();
@@ -189,6 +190,19 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utt);
     }
+  };
+
+  const formatScheduledFor = (dateTime) => {
+    if (!dateTime) return "N/A";
+
+    return new Date(dateTime).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   useEffect(() => {
@@ -347,12 +361,15 @@ function KitchenManagment({ kitchen, restaurant_id, user_id, token }) {
         {orders?.map((order) => {
           const customerName =
             order.customer_name || order.customerName || order.name || "N/A";
-          const scheduledFor =
-            order.scheduled_for ||
+
+          const rawScheduledFor =
+            order.scheduled_for ??
             [order.scheduled_date, order.scheduled_time]
               .filter(Boolean)
-              .join(" ") ||
-            "N/A";
+              .join(" ");
+
+          const scheduledFor = formatScheduledFor(rawScheduledFor);
+
           const tipPercentage =
             order.tip_percentage ?? order.tipPercentage ?? order.tip_percent;
           const tipAmount = order.tips ?? order.tip_amount ?? order.tipAmount;
