@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Info, Shield, CheckCheck, Lock } from "lucide-react";
+import { Info, Shield, CheckCheck, Lock, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Separator } from "../ui/Separator";
 import { useLanguage } from "@/context/LanguageContext";
@@ -33,7 +33,7 @@ const PrivacyPolicyComponent = () => {
           : "We collect data necessary to deliver your orders and improve your experience:",
         items: isAr
           ? [
-              "الاسم، العنوان، ورقم الهاتف للتوصيل.",
+              "الاسم، العنوان، ورقم الهاتف لتوصيل الطلبات.",
               "تاريخ الطلبات والأصناف المفضلة لديك.",
               "معلومات الجهاز والمتصفح لتحسين أداء الموقع.",
             ]
@@ -52,18 +52,38 @@ const PrivacyPolicyComponent = () => {
         items: isAr
           ? [
               "تجهيز وتوصيل طلبات الطعام الخاصة بك.",
-              "إرسال عروض حصرية وخصومات (بموافقتك).",
+              "إرسال تحديثات وإشعارات الطلب عبر الرسائل النصية (SMS).",
               "تحسين جودة قائمة الطعام لدينا بناءً على طلباتكم.",
             ]
           : [
               "Processing and delivering your food orders.",
-              "Sending exclusive offers and discounts (with your consent).",
+              "Sending order status notifications via SMS.",
               "Improving our menu quality based on your preferences.",
             ],
       },
       {
+        icon: <MessageSquare className="h-5 w-5 text-purple-500" />,
+        title: isAr
+          ? "3. الاتصالات عبر الرسائل النصية (SMS)"
+          : "3. SMS Communications & Privacy",
+        desc: isAr
+          ? "نحن نأخذ خصوصية رقم هاتفك بجدية تامة:"
+          : "We take your phone number privacy very seriously:",
+        items: isAr
+          ? [
+              "نستخدم رقم هاتفك لإرسال إشعارات وتحديثات الطلبات الخاصة بك فقط.",
+              "يمكنك إلغاء الاشتراك في أي وقت بالرد بكلمة STOP على أي رسالة تصلك.",
+              "لن يتم مشاركة معلومات موافقة الـ SMS أو أرقام الهواتف مع أي أطراف خارجية لأغراض التسويق.",
+            ]
+          : [
+              "We use your phone number solely to send you transactional SMS notifications regarding your orders.",
+              "You can opt-out at any time by replying STOP to any SMS.",
+              "SMS consent and phone numbers will not be shared with third parties for marketing purposes.",
+            ],
+      },
+      {
         icon: <Lock className="h-5 w-5 text-blue-500" />,
-        title: isAr ? "3. أمن البيانات والدفع" : "3. Data Security & Payments",
+        title: isAr ? "4. أمن البيانات والدفع" : "4. Data Security & Payments",
         desc: isAr
           ? "نحن لا نخزن بيانات بطاقات الائتمان. يتم معالجة جميع المدفوعات عبر بوابات دفع عالمية مشفرة وآمنة."
           : "We do not store credit card details. All payments are processed through secure, encrypted global payment gateways.",
