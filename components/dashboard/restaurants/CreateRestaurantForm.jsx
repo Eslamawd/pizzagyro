@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { addNewRestaurant } from "@/lib/restaurantApi";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
-import LocationPicker from "@/components/delivry/LocationPicker";
+import LocationPicker from "@/components/delivery/LocationPicker";
 
 function CreateRestaurantForm({ onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -66,7 +66,7 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
       toast.error(
         lang === "ar"
           ? "الرجاء إدخال جميع الحقول المطلوبة"
-          : "Please fill all required fields"
+          : "Please fill all required fields",
       );
       return;
     }
@@ -76,14 +76,16 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
       toast.error(
         lang === "ar"
           ? "يرجى رفع شعار المطعم"
-          : "Please upload the restaurant logo"
+          : "Please upload the restaurant logo",
       );
       return;
     }
 
     if (!formData.cover) {
       toast.error(
-        lang === "ar" ? "يرجى رفع صورة الغلاف" : "Please upload the cover image"
+        lang === "ar"
+          ? "يرجى رفع صورة الغلاف"
+          : "Please upload the cover image",
       );
       return;
     }
@@ -97,7 +99,7 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
       const res = await addNewRestaurant(formDataObj);
       if (res?.active === false) {
         toast.error(
-          lang === "ar" ? res.message?.message_ar : res.message?.message
+          lang === "ar" ? res.message?.message_ar : res.message?.message,
         );
         return;
       }
@@ -105,7 +107,7 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
         toast.success(
           lang === "ar"
             ? "تم إنشاء المطعم بنجاح ✅"
-            : "Restaurant created successfully ✅"
+            : "Restaurant created successfully ✅",
         );
         onSuccess && onSuccess(res);
         onCancel && onCancel();
@@ -116,7 +118,7 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
       toast.error(
         lang === "ar"
           ? "حدث خطأ أثناء إنشاء المطعم"
-          : "Failed to create restaurant"
+          : "Failed to create restaurant",
       );
     } finally {
       setIsLoading(false);
@@ -288,8 +290,8 @@ function CreateRestaurantForm({ onSuccess, onCancel }) {
               ? "جارٍ الحفظ..."
               : "Saving..."
             : lang === "ar"
-            ? "إنشاء المطعم"
-            : "Create Restaurant"}
+              ? "إنشاء المطعم"
+              : "Create Restaurant"}
         </Button>
       </div>
     </motion.form>

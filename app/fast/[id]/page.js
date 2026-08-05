@@ -1,5 +1,5 @@
 "use client";
-import DelivryManagment from "@/components/delivry/DelivryManagment";
+import DelivryManagment from "@/components/delivery/DelivryManagment";
 import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -56,7 +56,7 @@ function Page() {
         });
       } else {
         console.warn(
-          "⚠️ No tokens found in URL or localStorage. Redirecting/Error handling needed."
+          "⚠️ No tokens found in URL or localStorage. Redirecting/Error handling needed.",
         );
         // هنا قد ترغب في إعادة التوجيه إلى صفحة تسجيل الدخول أو إظهار رسالة خطأ
       }

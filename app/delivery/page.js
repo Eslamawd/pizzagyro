@@ -1,4 +1,4 @@
-import MenuShowDelivery from "@/components/delivry/MenuShowDelivery";
+import MenuShowDelivery from "@/components/delivery/MenuShowDelivery";
 import React from "react";
 
 function page() {

@@ -1,5 +1,5 @@
 "use client";
-import ShowOrderDelivry from "@/components/delivry/ShowOrderDelivry";
+import ShowOrderDelivry from "@/components/delivery/ShowOrderDelivry";
 import React from "react";
 
 function page() {
