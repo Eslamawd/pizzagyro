@@ -22,6 +22,7 @@ const MenuShowDelivery = () => {
     location,
     menus,
     phone,
+    smsOptIn,
     customerName,
     tipPercentage,
     scheduledDate,
@@ -49,6 +50,7 @@ const MenuShowDelivery = () => {
     setScheduledDate,
     setScheduledTime,
     setOrderType,
+    setSmsOptIn,
     setSelectedItem,
     setSelectedMenu,
     setSelectedOptions,
@@ -107,6 +109,8 @@ const MenuShowDelivery = () => {
         cart={cart}
         location={location}
         phone={phone}
+        smsOptIn={smsOptIn}
+        setSmsOptIn={setSmsOptIn}
         customerName={customerName}
         tipPercentage={tipPercentage}
         scheduledDate={scheduledDate}

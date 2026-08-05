@@ -11,6 +11,8 @@ const DeliveryCartDrawer = ({
   cart,
   location,
   phone,
+  smsOptIn,
+  setSmsOptIn,
   customerName,
   tipPercentage,
   scheduledDate,
@@ -468,6 +470,27 @@ const DeliveryCartDrawer = ({
                           value={phone}
                           onChange={(event) => setPhone(event.target.value)}
                         />
+                      </div>
+
+                      {/* SMS Opt-in Consent Checkbox for Twilio Compliance */}
+                      <div className="pt-2 pb-1">
+                        <label className="flex items-start gap-2.5 cursor-pointer select-none bg-slate-50 p-3 rounded-lg border border-slate-200 hover:border-orange-300 transition-all">
+                          <input
+                            type="checkbox"
+                            checked={smsOptIn}
+                            onChange={(e) => setSmsOptIn(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 accent-orange-600"
+                          />
+                          <span className="text-xs text-slate-600 leading-tight">
+                            I agree to receive transactional order status SMS
+                            updates from{" "}
+                            <strong className="text-slate-900 font-bold">
+                              Pizza & Gyro Party
+                            </strong>
+                            . Message & data rates may apply. Reply STOP to opt
+                            out.
+                          </span>
+                        </label>
                       </div>
 
                       <div className="space-y-1">
