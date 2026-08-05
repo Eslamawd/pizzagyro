@@ -34,6 +34,7 @@ const useMenuShowDelivery = () => {
     isSet: false,
   });
   const [phone, setPhone] = useState("");
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [tipPercentage, setTipPercentage] = useState(0);
   const [scheduledDate, setScheduledDate] = useState("");
@@ -243,6 +244,7 @@ const useMenuShowDelivery = () => {
       orderType,
       location,
       phone,
+      smsOptIn,
       customerName,
       scheduledDate,
       scheduledTime,
@@ -261,6 +263,7 @@ const useMenuShowDelivery = () => {
       location,
       menus,
       phone,
+      smsOptIn,
       customerName,
       tipPercentage,
       scheduledDate,
@@ -288,6 +291,7 @@ const useMenuShowDelivery = () => {
     location,
     menus,
     phone,
+    smsOptIn,
     customerName,
     tipPercentage,
     scheduledDate,
@@ -318,6 +322,7 @@ const useMenuShowDelivery = () => {
     setSelectedItem,
     setSelectedMenu,
     setSelectedOptions,
+    setSmsOptIn,
     setShowCart,
     setShowLocModal,
     setShowPaymentModal,

@@ -76,6 +76,7 @@ export const canProceedDeliveryPayment = ({
   orderType,
   location,
   phone,
+  smsOptIn,
   customerName,
   scheduledDate,
   scheduledTime,
@@ -142,6 +143,11 @@ export const canProceedDeliveryPayment = ({
     return false;
   }
 
+  if (!smsOptIn) {
+    toast.error("Please accept the SMS terms to receive order updates.");
+    return false;
+  }
+
   return true;
 };
 
@@ -154,6 +160,7 @@ export const submitDeliveryOrder = async ({
   location,
   menus,
   phone,
+  smsOptIn,
   customerName,
   tipPercentage,
   scheduledDate,
@@ -237,6 +244,11 @@ export const submitDeliveryOrder = async ({
     return;
   }
 
+  if (!smsOptIn) {
+    toast.error("Please accept the SMS terms to receive order updates.");
+    return;
+  }
+
   if (!menus || menus.length === 0) {
     toast.error("No restaurant data available!");
     return;
@@ -271,6 +283,7 @@ export const submitDeliveryOrder = async ({
       latitude: orderType === "delivery" ? validated.customerLat : null,
       longitude: orderType === "delivery" ? validated.customerLng : null,
       phone: normalizeUSPhone(phone),
+      sms_opt_in: smsOptIn,
       customer_name: customerName.trim(),
       tip_percentage: Number(tipPercentage || 0),
       tips: Number(calculatedTips || 0).toFixed(2),
