@@ -64,7 +64,7 @@ const Hero = () => {
             transition={{ delay: 0.2 }}
             className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center"
           >
-            <Link href="/delivry">
+            <Link href="/delivery">
               <Button
                 size="lg"
                 className="w-full sm:w-64 px-8 h-16 bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold rounded-2xl transition-all shadow-xl shadow-orange-200"

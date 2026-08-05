@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { updateRestaurant } from "@/lib/restaurantApi";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
-import LocationPicker from "@/components/delivry/LocationPicker";
+import LocationPicker from "@/components/delivery/LocationPicker";
 
 function UpdateRestaurantForm({ restaurant, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -68,7 +68,7 @@ function UpdateRestaurantForm({ restaurant, onSuccess, onCancel }) {
       toast.error(
         lang === "ar"
           ? "الرجاء إدخال جميع الحقول المطلوبة"
-          : "Please fill all required fields"
+          : "Please fill all required fields",
       );
       return;
     }
@@ -90,7 +90,7 @@ function UpdateRestaurantForm({ restaurant, onSuccess, onCancel }) {
         toast.success(
           lang === "ar"
             ? "تم تحديث بيانات المطعم بنجاح ✅"
-            : "Restaurant updated successfully ✅"
+            : "Restaurant updated successfully ✅",
         );
         onSuccess?.(res);
         onCancel?.();
@@ -101,7 +101,7 @@ function UpdateRestaurantForm({ restaurant, onSuccess, onCancel }) {
       toast.error(
         lang === "ar"
           ? "حدث خطأ أثناء تحديث المطعم"
-          : "Failed to update restaurant"
+          : "Failed to update restaurant",
       );
     } finally {
       setIsLoading(false);
@@ -273,8 +273,8 @@ function UpdateRestaurantForm({ restaurant, onSuccess, onCancel }) {
               ? "جارٍ الحفظ..."
               : "Saving..."
             : lang === "ar"
-            ? "تحديث المطعم"
-            : "Update Restaurant"}
+              ? "تحديث المطعم"
+              : "Update Restaurant"}
         </Button>
       </div>
     </motion.form>
